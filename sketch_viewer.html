@@ -1,0 +1,1633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>What If Electrons Disappeared for 5 Seconds? (1:1 Viral Simulation Engine V4)</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+    body {
+      background-color: #070a12;
+      color: #e2e8f0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    body.export-mode {
+      padding: 0;
+      margin: 0;
+      background: #000;
+      overflow: hidden;
+    }
+    body.export-mode header,
+    body.export-mode .controls-panel {
+      display: none !important;
+    }
+    body.export-mode .workspace {
+      max-width: none;
+      width: 100vw;
+      height: 100vh;
+      gap: 0;
+    }
+    body.export-mode .phone-container {
+      width: 100vw;
+      height: 100vh;
+      border-radius: 0;
+      box-shadow: none;
+    }
+
+    header {
+      margin-bottom: 12px;
+      text-align: center;
+    }
+    h1 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: #f8fafc;
+    }
+    p.subtitle {
+      font-size: 0.8rem;
+      color: #94a3b8;
+    }
+    .workspace {
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+      max-width: 1220px;
+      width: 100%;
+      justify-content: center;
+    }
+
+    /* Phone / TikTok 9:16 Frame (540x960 base layout scaled cleanly via CSS/WebGL) */
+    .phone-container {
+      position: relative;
+      width: 405px;
+      height: 720px;
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.85), 0 0 0 6px #1e293b;
+      background: #000;
+      flex-shrink: 0;
+    }
+    #webgl-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    #fx-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      display: block;
+    }
+
+    /* Overlay HUD matching @man_ia_c typography 1:1 */
+    .hud-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 36px 24px 52px;
+      z-index: 10;
+    }
+    .hud-top {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 136px;
+    }
+    .hud-main-title {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.54rem;
+      text-align: center;
+      line-height: 1.26;
+      color: #ffffff;
+      text-shadow: 0 2px 14px rgba(0, 0, 0, 0.88), 0 0 28px rgba(0, 0, 0, 0.65);
+      letter-spacing: 0.01em;
+    }
+    .hud-main-title span.hl {
+      color: #7cc4fa;
+    }
+
+    /* Left Countdown HUD */
+    .hud-middle {
+      position: absolute;
+      top: 46.5%;
+      left: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.92), 0 0 22px rgba(0, 0, 0, 0.65);
+    }
+    .hud-countdown-label {
+      font-size: 0.70rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      color: rgba(255, 255, 255, 0.94);
+      text-transform: uppercase;
+      margin-bottom: 1px;
+    }
+    .hud-timer {
+      font-family: Georgia, "Times New Roman", serif;
+      font-variant-numeric: tabular-nums;
+      font-size: 2.22rem;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      color: #ffffff;
+      line-height: 1.06;
+      margin: 1px 0 5px;
+    }
+    .hud-timer.serif-back {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 2.38rem;
+      letter-spacing: 0.03em;
+    }
+    .hud-subtrack {
+      font-size: 0.54rem;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      color: rgba(255, 255, 255, 0.78);
+      text-transform: uppercase;
+    }
+
+    /* Bottom Subtitles */
+    .hud-bottom {
+      position: absolute;
+      bottom: 30.5%;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      padding: 0 24px;
+    }
+    .hud-subtitle {
+      font-family: Georgia, "Times New Roman", serif;
+      font-style: italic;
+      font-size: 1.16rem;
+      line-height: 1.35;
+      color: #ffffff;
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.98), 0 0 24px rgba(0, 0, 0, 0.85);
+    }
+
+    /* Outro Screen (72.5s - 80.0s) */
+    .outro-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #000000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
+      z-index: 20;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .outro-title {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.52rem;
+      text-align: center;
+      line-height: 1.3;
+      color: #ffffff;
+      margin-bottom: 18px;
+    }
+    .outro-title span.hl {
+      color: #7cc4fa;
+    }
+    .outro-sub {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 0.56rem;
+      letter-spacing: 0.18em;
+      line-height: 1.75;
+      color: rgba(255, 255, 255, 0.68);
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    /* Controls Panel */
+    .controls-panel {
+      background: #131b2e;
+      border: 1px solid #26334d;
+      border-radius: 16px;
+      padding: 20px;
+      flex: 1;
+      max-width: 460px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .controls-panel h2 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #f8fafc;
+      border-bottom: 1px solid #26334d;
+      padding-bottom: 8px;
+    }
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    button {
+      flex: 1;
+      background: #3b82f6;
+      color: #fff;
+      border: none;
+      padding: 9px 12px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: background 0.15s;
+    }
+    button:hover {
+      background: #2563eb;
+    }
+    button.secondary {
+      background: #334155;
+    }
+    button.secondary:hover {
+      background: #475569;
+    }
+    .slider-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .slider-group label {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      display: flex;
+      justify-content: space-between;
+    }
+    input[type=range] {
+      width: 100%;
+      accent-color: #3b82f6;
+      cursor: pointer;
+    }
+    .scenes-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 360px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    .scene-card {
+      background: #0b101e;
+      border: 1px solid #1e293b;
+      padding: 8px 11px;
+      border-radius: 6px;
+      font-size: 0.74rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .scene-card:hover {
+      border-color: #60a5fa;
+    }
+    .scene-card.active {
+      border-color: #3b82f6;
+      background: rgba(59, 130, 246, 0.15);
+    }
+    .scene-card .time {
+      color: #60a5fa;
+      font-family: monospace;
+      font-size: 0.7rem;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.62rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>MOTOR CINEMATOGRÁFICO 3D V4 — RÉPLICA 1:1 (@man_ia_c)</h1>
+    <p class="subtitle">Humanos Low-Poly Articulados, Árboles Y-Branch, Rascacielos Midtown, Manos 3D POV, Tierra FBM y Nube LiDAR 110k</p>
+  </header>
+
+  <div class="workspace">
+    <div class="phone-container" id="phone-container">
+      <canvas id="webgl-canvas"></canvas>
+      <canvas id="fx-canvas"></canvas>
+
+      <div class="hud-layer" id="hud-layer">
+        <div class="hud-top" id="hud-top">
+          <div class="hud-main-title" id="main-title">
+            What if <span class="hl">electrons</span> disappeared<br>for 5 seconds?
+          </div>
+        </div>
+
+        <div class="hud-middle" id="hud-middle">
+          <div class="hud-countdown-label" id="hud-label">ELECTRONS DISAPPEAR IN</div>
+          <div class="hud-timer" id="hud-timer">0:08.033</div>
+          <div class="hud-subtrack" id="hud-subtrack">EVERY ATOM ON EARTH HAS THEM</div>
+        </div>
+
+        <div class="hud-bottom">
+          <div class="hud-subtitle" id="hud-subtitle"></div>
+        </div>
+      </div>
+
+      <div class="outro-layer" id="outro-layer">
+        <div class="outro-title" id="outro-title">
+          What if <span class="hl">electrons</span> disappeared<br>for 5 seconds?
+        </div>
+        <div class="outro-sub" id="outro-sub">
+          ELECTRONS ARE 0.03% OF YOUR MASS<br>AND EVERY CHEMICAL BOND IN YOUR BODY
+        </div>
+      </div>
+    </div>
+
+    <div class="controls-panel">
+      <h2>Control de Reproducción (80s Completos)</h2>
+      <div class="btn-row">
+        <button id="btn-play">
+          <span id="play-icon">&#9654;</span> <span id="play-text">Reproducir con Voz + Audio</span>
+        </button>
+        <button class="secondary" id="btn-reset">Reiniciar (0:00)</button>
+      </div>
+
+      <div class="slider-group">
+        <label>
+          <span>Línea de Tiempo (Scrubber)</span>
+          <span id="time-display" style="font-family: monospace;">00:00.000 / 01:20.000</span>
+        </label>
+        <input type="range" id="time-slider" min="0" max="80.0" step="0.02" value="0">
+      </div>
+
+      <h2>Saltos Directos a Escenas Clave</h2>
+      <div class="scenes-list" id="scenes-list"></div>
+    </div>
+  </div>
+
+  <audio id="audio-track" src="final_audio_mix.mp3" preload="auto"></audio>
+
+  <script src="three.min.js"></script>
+  <script src="story_config.js"></script>
+  <script src="world_textures.js"></script>
+  <script src="world_actors.js"></script>
+  <script src="world_skyline_and_lidar.js"></script>
+  <script src="world_fx_overlay.js"></script>
+  <script src="world_postfx.js"></script>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('export') === '1') {
+      document.body.classList.add('export-mode');
+    }
+
+    const CONFIG = window.STORY_CONFIG;
+    const TOTAL_DURATION = CONFIG.totalDuration;
+
+    const container = document.getElementById('phone-container');
+    const webglCanvas = document.getElementById('webgl-canvas');
+    const fxCanvas = document.getElementById('fx-canvas');
+    const fxCtx = fxCanvas.getContext('2d');
+
+    let VIEW_W = container.clientWidth || 405;
+    let VIEW_H = container.clientHeight || 720;
+
+    const renderer = new THREE.WebGLRenderer({
+      canvas: webglCanvas,
+      antialias: false,
+      powerPreference: "high-performance",
+      preserveDrawingBuffer: true
+    });
+    const DPR = Math.min(window.devicePixelRatio || 1, 3);
+    renderer.setPixelRatio(DPR);
+    renderer.setSize(VIEW_W, VIEW_H);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    const maxAniso = renderer.capabilities.getMaxAnisotropy();
+
+    // 2D FX layer is drawn offscreen and composited inside the post pipeline (receives bloom + grade)
+    fxCanvas.style.display = 'none';
+    fxCanvas.width = Math.round(VIEW_W * DPR);
+    fxCanvas.height = Math.round(VIEW_H * DPR);
+    fxCtx.setTransform(DPR, 0, 0, DPR, 0, 0);
+
+    const drawSize = renderer.getDrawingBufferSize(new THREE.Vector2());
+    const postFX = new WorldPostFX.PostFX(renderer, drawSize.x, drawSize.y);
+
+    // Reference videos carry no on-screen text: hide HUD / subtitles / outro card unless the story enables them
+    const SHOW_TEXT = CONFIG.showText === true;
+    if (!SHOW_TEXT) {
+      document.getElementById('hud-layer').style.display = 'none';
+      document.getElementById('outro-layer').style.display = 'none';
+    }
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(48, VIEW_W / VIEW_H, 0.1, 1600);
+    scene.add(camera);
+
+    function handleResize() {
+      VIEW_W = container.clientWidth;
+      VIEW_H = container.clientHeight;
+      renderer.setSize(VIEW_W, VIEW_H);
+      fxCanvas.width = Math.round(VIEW_W * DPR);
+      fxCanvas.height = Math.round(VIEW_H * DPR);
+      fxCtx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      const ds = renderer.getDrawingBufferSize(new THREE.Vector2());
+      postFX.setSize(ds.x, ds.y);
+      camera.aspect = VIEW_W / VIEW_H;
+      camera.updateProjectionMatrix();
+    }
+    window.addEventListener('resize', handleResize);
+
+    // Deterministic PRNG for reproducible scene construction
+    let seedVal = 424242;
+    function sRand() {
+      seedVal = (seedVal * 16807) % 2147483647;
+      return (seedVal - 1) / 2147483646;
+    }
+
+    // --- INITIALIZE PROCEDURAL TEXTURES ---
+    const skyDayTexture = WorldTextures.createSkyTexture();
+    const grassDayTex = WorldTextures.createGrassTexture(sRand);
+    const groundXrayTex = WorldTextures.createXrayGroundTexture(sRand);
+    const bTexWarm = WorldTextures.createBuildingTexture('#6e6b62', '#e0d6c3', false, sRand);
+    const bTexCool = WorldTextures.createBuildingTexture('#536375', '#b5cce2', false, sRand);
+    const bTexDark = WorldTextures.createBuildingTexture('#38404a', '#95a9bd', false, sRand);
+    const bTexRedBrick = WorldTextures.createBuildingTexture('#4e2721', '#d4a373', false, sRand);
+    const bTexXray = WorldTextures.createBuildingTexture('#050811', '#ffffff', true, sRand);
+    const earthCloudTex = WorldTextures.createSwirlingEarthTexture(sRand);
+    const moonCraterTex = WorldTextures.createCrateredMoonTexture(sRand);
+    const dotSpriteTex = WorldTextures.createParticleGlowTexture(false);
+    const sparkSpriteTex = WorldTextures.createParticleGlowTexture(true);
+
+    [grassDayTex, groundXrayTex, bTexWarm, bTexCool, bTexDark, bTexRedBrick, bTexXray].forEach(tx => {
+      tx.anisotropy = maxAniso;
+      tx.needsUpdate = true;
+    });
+
+    // --- LIGHTING (Cinematic Sunset Lighting, Strong Directional Sunlight, Deep Sharp Shadows) ---
+    const ambientLight = new THREE.AmbientLight(0xffe0bd, 0.14);
+    scene.add(ambientLight);
+
+    const hemiLight = new THREE.HemisphereLight(0xffcfa0, 0x0b1f0c, 0.36);
+    scene.add(hemiLight);
+
+    const sunLight = new THREE.DirectionalLight(0xffb66e, 1.85);
+    sunLight.position.set(-22, 16, 15);
+    sunLight.castShadow = true;
+    sunLight.shadow.mapSize.set(4096, 4096);
+    sunLight.shadow.camera.left = -22;
+    sunLight.shadow.camera.right = 22;
+    sunLight.shadow.camera.top = 22;
+    sunLight.shadow.camera.bottom = -22;
+    sunLight.shadow.camera.near = 1;
+    sunLight.shadow.camera.far = 90;
+    sunLight.shadow.bias = -0.0002;
+    sunLight.shadow.normalBias = 0.015;
+    sunLight.shadow.radius = 1.0; // Deep, razor-sharp low-poly shadows!
+    sunLight.target.position.set(0, 0, -4);
+    scene.add(sunLight);
+    scene.add(sunLight.target);
+
+    // Warm golden-sunset atmospheric horizon haze
+    const dayFog = new THREE.FogExp2(0x8a705b, 0.0095);
+
+    // --- MATERIALS PALETTE (Rich Sunset Daylight & Minimalist Pure-White Wireframe Modes) ---
+    const mats = {
+      skin: new THREE.MeshLambertMaterial({ color: 0xc89369, flatShading: true }),
+      hairBrown: new THREE.MeshLambertMaterial({ color: 0x4d2e18, flatShading: true }),
+      hairDark: new THREE.MeshLambertMaterial({ color: 0x1c1917, flatShading: true }),
+      hairBlonde: new THREE.MeshLambertMaterial({ color: 0xc8a951, flatShading: true }),
+      shirtLightBlue: new THREE.MeshLambertMaterial({ color: 0x7e96b0, flatShading: true }),
+      shirtRoyalBlue: new THREE.MeshLambertMaterial({ color: 0x163da0, flatShading: true }),
+      shirtYellow: new THREE.MeshLambertMaterial({ color: 0xc7b926, flatShading: true }),
+      shirtDarkRed: new THREE.MeshLambertMaterial({ color: 0x7f1d1d, flatShading: true }),
+      shirtBeige: new THREE.MeshLambertMaterial({ color: 0xc2b59b, flatShading: true }),
+      red: new THREE.MeshLambertMaterial({ color: 0xc92a2a, flatShading: true }),
+      white: new THREE.MeshLambertMaterial({ color: 0xeef2f6, flatShading: true }),
+      pantsDark: new THREE.MeshLambertMaterial({ color: 0x141b29, flatShading: true }),
+      pantsLightGrey: new THREE.MeshLambertMaterial({ color: 0xb4bbc4, flatShading: true }),
+      dogBrown: new THREE.MeshLambertMaterial({ color: 0x9c6b3b, flatShading: true }),
+      treeTrunk: new THREE.MeshLambertMaterial({ color: 0x332012, flatShading: true }),
+      treeDark: new THREE.MeshLambertMaterial({ color: 0x0a1e07, flatShading: true }),
+      treeMid: new THREE.MeshLambertMaterial({ color: 0x132f0d, flatShading: true }),
+      bWarm: new THREE.MeshLambertMaterial({ map: bTexWarm }),
+      bCool: new THREE.MeshLambertMaterial({ map: bTexCool }),
+      bDark: new THREE.MeshLambertMaterial({ map: bTexDark }),
+      bRedBrick: new THREE.MeshLambertMaterial({ map: bTexRedBrick })
+    };
+
+    // Minimalist White Wireframe Only on Pure Black Background (#000000) — Zero Neon Colors!
+    // 1. Pure black occluding body fill with polygonOffset so white EdgesGeometry lines are razor-sharp
+    const xrayPersonFillMat = new THREE.MeshBasicMaterial({
+      color: 0x000000,
+      transparent: true,
+      opacity: 0.90,
+      polygonOffset: true,
+      polygonOffsetFactor: 1,
+      polygonOffsetUnits: 1
+    });
+    // 2. Pure white translucent Y-branch tree trunk fill (zero neon blue!)
+    const xrayTreeTrunkMat = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.34,
+      depthWrite: false
+    });
+    // 3. Pure black occluding tree canopy fill with crisp white facet edges
+    const xrayTreeCanopyMat = new THREE.MeshBasicMaterial({
+      color: 0x000000,
+      transparent: true,
+      opacity: 0.96,
+      polygonOffset: true,
+      polygonOffsetFactor: 1,
+      polygonOffsetUnits: 1
+    });
+    // 4. Minimalist Pure-White Wireframe POV Hands with translucent neutral charcoal fill so stars shine through
+    const xrayHandFillMat = new THREE.MeshLambertMaterial({
+      color: 0x1c1c1c,
+      emissive: 0x000000,
+      flatShading: true,
+      transparent: true,
+      opacity: 0.22,
+      depthWrite: false,
+      polygonOffset: true,
+      polygonOffsetFactor: 1,
+      polygonOffsetUnits: 1
+    });
+    const xrayHandSleeveMat = new THREE.MeshLambertMaterial({
+      color: 0x0c0c0c,
+      emissive: 0x000000,
+      flatShading: true,
+      transparent: true,
+      opacity: 0.34,
+      depthWrite: false,
+      polygonOffset: true,
+      polygonOffsetFactor: 1,
+      polygonOffsetUnits: 1
+    });
+    // 5. Minimalist Monochrome X-Ray Blanket tiles (pure black & neutral dark grey tiles with white grid lines)
+    const xrayBlanketRedMat = new THREE.MeshBasicMaterial({
+      color: 0x030303,
+      transparent: true,
+      opacity: 0.92
+    });
+    const xrayBlanketWhiteMat = new THREE.MeshBasicMaterial({
+      color: 0x2a2a2a,
+      transparent: true,
+      opacity: 0.72
+    });
+    // 6. X-Ray Skyscraper window-grid facade material
+    const xrayBuildingMat = new THREE.MeshBasicMaterial({
+      map: bTexXray,
+      transparent: true,
+      opacity: 0.96,
+      polygonOffset: true,
+      polygonOffsetFactor: 1,
+      polygonOffsetUnits: 1
+    });
+    // 7. Blinding Incandescent Pure-White Material & Faceted Nuclear POV Hands
+    const nuclearWhiteMat = new THREE.MeshBasicMaterial({
+      color: 0xffffff
+    });
+    const nuclearHandMat = new THREE.MeshLambertMaterial({
+      color: 0xffffff,
+      emissive: 0xb0b0b0,
+      flatShading: true,
+      transparent: true,
+      opacity: 0.94,
+      polygonOffset: true,
+      polygonOffsetFactor: 1,
+      polygonOffsetUnits: 1
+    });
+    const nuclearSleeveMat = new THREE.MeshLambertMaterial({
+      color: 0xe5e5e5,
+      emissive: 0x737373,
+      flatShading: true,
+      transparent: true,
+      opacity: 0.88,
+      polygonOffset: true,
+      polygonOffsetFactor: 1,
+      polygonOffsetUnits: 1
+    });
+
+    // Dedicated camera key light so 3/4-profile POV hands have crisp side-plane vs back-plane shading
+    const handRimLight = new THREE.DirectionalLight(0xffffff, 0.95);
+    handRimLight.position.set(0.0, 0.6, -0.2);
+    camera.add(handRimLight);
+    camera.add(handRimLight.target);
+    handRimLight.target.position.set(0, -0.3, -1.0);
+
+    const edgeWhiteMat = new THREE.LineBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.98
+    });
+    const edgeCanopyMat = new THREE.LineBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.82
+    });
+
+    const allRegisteredObjects = [];
+
+    function registerStylizedMesh(mesh, dayMat, opts = {}) {
+      const edgeThreshold = opts.edgeThreshold || 12;
+      const eGeo = new THREE.EdgesGeometry(mesh.geometry, edgeThreshold);
+      const eLines = new THREE.LineSegments(eGeo, opts.isTreeCanopy ? edgeCanopyMat : edgeWhiteMat);
+      eLines.visible = false;
+      mesh.add(eLines);
+
+      let xMat = xrayPersonFillMat;
+      if (opts.isBuilding) xMat = xrayBuildingMat;
+      else if (opts.isHandSleeve) xMat = xrayHandSleeveMat;
+      else if (opts.isHand) xMat = xrayHandFillMat;
+      else if (opts.isTreeTrunk) xMat = xrayTreeTrunkMat;
+      else if (opts.isTreeCanopy) xMat = xrayTreeCanopyMat;
+      else if (opts.isBlanket) xMat = opts.isRedTile ? xrayBlanketRedMat : xrayBlanketWhiteMat;
+
+      mesh.castShadow = !opts.isBuilding && !opts.isHand;
+      mesh.receiveShadow = !opts.isHand;
+
+      mesh.userData = {
+        dayMat,
+        xrayMat: xMat,
+        edges: eLines,
+        isBuilding: !!opts.isBuilding,
+        isHand: !!opts.isHand,
+        isHandSleeve: !!opts.isHandSleeve,
+        isTreeTrunk: !!opts.isTreeTrunk,
+        isTreeCanopy: !!opts.isTreeCanopy,
+        isPerson: !!opts.isPerson,
+        isBlanket: !!opts.isBlanket
+      };
+      allRegisteredObjects.push(mesh);
+      return mesh;
+    }
+
+    // =========================================================================
+    // BUILD WORLD 1: CENTRAL PARK & MIDTOWN MANHATTAN SKYLINE
+    // =========================================================================
+    const parkWorld = new THREE.Group();
+    scene.add(parkWorld);
+
+    // 1. Ground Lawn (Daylight grass vs X-Ray semi-translucent micro-filament ground so stars shine through!)
+    const groundGeo = new THREE.PlaneGeometry(160, 160, 48, 48);
+    groundGeo.rotateX(-Math.PI / 2);
+    const grassDayMat = new THREE.MeshLambertMaterial({ map: grassDayTex });
+    const groundXrayMat = new THREE.MeshBasicMaterial({
+      map: groundXrayTex,
+      transparent: true,
+      opacity: 0.78,
+      depthWrite: false
+    });
+    const groundMesh = new THREE.Mesh(groundGeo, grassDayMat);
+    groundMesh.receiveShadow = true;
+    parkWorld.add(groundMesh);
+
+    // 2. Perspective-Compensated Screen-Space Ground Particles (Uniform screen density, zero horizon whiteout at tree line!)
+    const gpCount = 7200;
+    const gpGeo = new THREE.BufferGeometry();
+    const gpPos = new Float32Array(gpCount * 3);
+    for (let i = 0; i < gpCount; i++) {
+      const u = Math.pow(sRand(), 2.15);
+      const z = 8.4 - u * 16.2; // Concentrated in foreground/midground [8.4 .. -7.8], stopping before tree line!
+      const spreadX = 10.0 + (1.0 - z / 9.0) * 14.0;
+      gpPos[i * 3] = (sRand() - 0.5) * spreadX;
+      gpPos[i * 3 + 1] = 0.015 + sRand() * 0.04;
+      gpPos[i * 3 + 2] = z;
+    }
+    gpGeo.setAttribute('position', new THREE.BufferAttribute(gpPos, 3));
+    const gpMat = new THREE.PointsMaterial({
+      color: 0xc8e4ff,
+      map: dotSpriteTex,
+      size: 2.0 * DPR,
+      sizeAttenuation: false,
+      transparent: true,
+      opacity: 0.80,
+      depthWrite: false,
+      blending: THREE.NormalBlending
+    });
+    const groundParticles = new THREE.Points(gpGeo, gpMat);
+    groundParticles.visible = false;
+    parkWorld.add(groundParticles);
+
+    // 3. Igniting Nuclear Sand Bombs (Perspective-compensated screen-space tiers of 4-point diamond stars at 28s-42s: frame_015, frame_017, frame_019)
+    const bombGroup = new THREE.Group();
+    bombGroup.visible = false;
+    parkWorld.add(bombGroup);
+
+    const bombCountFine = 2400;
+    const bombGeoFine = new THREE.BufferGeometry();
+    const bombPosFine = new Float32Array(bombCountFine * 3);
+    for (let i = 0; i < bombCountFine; i++) {
+      const u = Math.pow(sRand(), 2.05);
+      const z = 8.2 - u * 16.0;
+      const spreadX = 9.5 + (1.0 - z / 9.0) * 13.0;
+      bombPosFine[i * 3] = (sRand() - 0.5) * spreadX;
+      bombPosFine[i * 3 + 1] = 0.03 + sRand() * 0.06;
+      bombPosFine[i * 3 + 2] = z;
+    }
+    bombGeoFine.setAttribute('position', new THREE.BufferAttribute(bombPosFine, 3));
+    const bombMatFine = new THREE.PointsMaterial({
+      color: 0xeef6ff,
+      map: dotSpriteTex,
+      size: 3.1 * DPR,
+      sizeAttenuation: false,
+      transparent: true,
+      opacity: 0.0,
+      depthWrite: false,
+      blending: THREE.NormalBlending
+    });
+    bombGroup.add(new THREE.Points(bombGeoFine, bombMatFine));
+
+    const bombCountDiamonds = 640;
+    const bombGeoDiamonds = new THREE.BufferGeometry();
+    const bombPosDiamonds = new Float32Array(bombCountDiamonds * 3);
+    for (let i = 0; i < bombCountDiamonds; i++) {
+      const u = Math.pow(sRand(), 1.95);
+      const z = 8.0 - u * 15.5;
+      const spreadX = 9.0 + (1.0 - z / 9.0) * 12.0;
+      bombPosDiamonds[i * 3] = (sRand() - 0.5) * spreadX;
+      bombPosDiamonds[i * 3 + 1] = 0.05 + sRand() * 0.07;
+      bombPosDiamonds[i * 3 + 2] = z;
+    }
+    bombGeoDiamonds.setAttribute('position', new THREE.BufferAttribute(bombPosDiamonds, 3));
+    const bombMat = new THREE.PointsMaterial({
+      color: 0xffffff,
+      map: sparkSpriteTex,
+      size: 8.5 * DPR,
+      sizeAttenuation: false,
+      transparent: true,
+      opacity: 0.0,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending
+    });
+    bombGroup.add(new THREE.Points(bombGeoDiamonds, bombMat));
+    const sandBombs = bombGroup;
+
+    // 4. Build Manhattan Skyline, Y-Branch Trees, Picnic Sitters, Crowd, Dog, and POV Hands
+    WorldSkylineAndLidar.buildManhattanSkyline(parkWorld, mats, registerStylizedMesh);
+    WorldActors.buildParkTrees(parkWorld, mats, registerStylizedMesh, sRand);
+
+    const animatedActors = [];
+    WorldActors.buildPicnicScene(parkWorld, mats, registerStylizedMesh, allRegisteredObjects, animatedActors);
+    WorldActors.buildParkCrowd(parkWorld, mats, registerStylizedMesh, allRegisteredObjects, animatedActors, sRand);
+    const dogGroup = WorldActors.buildSculptedDog(parkWorld, mats.dogBrown, registerStylizedMesh);
+    const povHandsGroup = WorldActors.buildPovHands(camera, mats, registerStylizedMesh);
+
+    // 5. Crisp Pinpoint Starfield Sky (Full 360 sphere so stars shine through ground & translucent POV hands in frame_010!)
+    const starCount = 9500;
+    const starGeo = new THREE.BufferGeometry();
+    const starPos = new Float32Array(starCount * 3);
+    for (let i = 0; i < starCount; i++) {
+      const r = 140 + sRand() * 200;
+      const theta = sRand() * Math.PI * 2;
+      const phi = Math.acos(2 * sRand() - 1);
+      starPos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+      starPos[i * 3 + 1] = r * Math.cos(phi);
+      starPos[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
+    }
+    starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+    const starMat = new THREE.PointsMaterial({
+      color: 0xffffff,
+      map: dotSpriteTex,
+      size: 1.9 * DPR,
+      sizeAttenuation: false,
+      transparent: true,
+      opacity: 0.95,
+      depthWrite: false
+    });
+    const starSystem = new THREE.Points(starGeo, starMat);
+    starSystem.visible = false;
+    scene.add(starSystem);
+
+    // =========================================================================
+    // BUILD WORLD 2: ORBITAL SPACE SCENE (42.2s - 64.0s: Expanding Earth & Moon)
+    // =========================================================================
+    const spaceWorld = new THREE.Group();
+    spaceWorld.visible = false;
+    scene.add(spaceWorld);
+
+    const earthMat = new THREE.MeshBasicMaterial({ map: earthCloudTex, color: 0xffffff });
+    const earthSphere = new THREE.Mesh(new THREE.SphereGeometry(5.2, 64, 64), earthMat);
+    spaceWorld.add(earthSphere);
+
+    // 3D Atmospheric Rim Glow Sprite behind Earth Sphere (prevents any inner ring artifact!)
+    const earthHaloSprite = new THREE.Sprite(
+      new THREE.SpriteMaterial({
+        map: dotSpriteTex,
+        color: 0x93c5fd,
+        transparent: true,
+        opacity: 0.78,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      })
+    );
+    earthHaloSprite.scale.set(12.4, 12.4, 1);
+    earthHaloSprite.position.set(0, 0, -0.5);
+    earthSphere.add(earthHaloSprite);
+
+    // Cratered Moon with directional light for realistic lunar terminator & Earthshine (frame_026..028)
+    const moonMat = new THREE.MeshLambertMaterial({
+      map: moonCraterTex,
+      color: 0xd4dce8,
+      transparent: true,
+      opacity: 1.0
+    });
+    const moonSphere = new THREE.Mesh(new THREE.SphereGeometry(0.76, 48, 48), moonMat);
+    spaceWorld.add(moonSphere);
+
+    // =========================================================================
+    // BUILD WORLD 3: SURFACE-SAMPLED 115K LIDAR POINT CLOUD (64.0s - 72.5s)
+    // =========================================================================
+    const lidarData = WorldSkylineAndLidar.buildLidarWorld(
+      scene,
+      parkWorld,
+      allRegisteredObjects,
+      dotSpriteTex,
+      sRand
+    );
+
+    // --- DOM HUD SETUP ---
+    const hudTop = document.getElementById('hud-top');
+    const hudMiddle = document.getElementById('hud-middle');
+    const hudLabel = document.getElementById('hud-label');
+    const hudTimer = document.getElementById('hud-timer');
+    const hudSubtrack = document.getElementById('hud-subtrack');
+    const hudSubtitle = document.getElementById('hud-subtitle');
+    const outroLayer = document.getElementById('outro-layer');
+    const timeDisplay = document.getElementById('time-display');
+    const timeSlider = document.getElementById('time-slider');
+    const audioTrack = document.getElementById('audio-track');
+
+    const scenesListEl = document.getElementById('scenes-list');
+    CONFIG.scenes.forEach(sc => {
+      const card = document.createElement('div');
+      card.className = 'scene-card';
+      const m1 = Math.floor(sc.start / 60), s1 = (sc.start % 60).toFixed(0).padStart(2, '0');
+      const m2 = Math.floor(sc.end / 60), s2 = (sc.end % 60).toFixed(0).padStart(2, '0');
+      card.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span class="time">0${m1}:${s1} - 0${m2}:${s2}</span>
+          <span class="badge" style="background:${sc.color}; color:#fff;">${sc.badge}</span>
+        </div>
+        <div style="margin-top:3px; font-weight:600; color:#f1f5f9;">${sc.id}. ${sc.name}</div>
+        <div style="margin-top:2px; color:#94a3b8; font-size:0.68rem;">${sc.desc}</div>
+      `;
+      card.onclick = () => seekTo(sc.start + 0.05);
+      scenesListEl.appendChild(card);
+    });
+
+    function lerp(a, b, k) { return a + (b - a) * Math.max(0, Math.min(1, k)); }
+    function smoothstep(edge0, edge1, x) {
+      const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
+      return t * t * (3 - 2 * t);
+    }
+
+    // =========================================================================
+    // CINEMATIC GRADE PER VISUAL MODE (blended over transitions)
+    // =========================================================================
+    const LOOKS = {
+      day: {
+        bloomStrength: 0.42, bloomThreshold: 0.80, bloomKnee: 0.25, bloomRadius: 1.0,
+        exposure: 1.02, contrast: 1.18, saturation: 1.06,
+        lift: [0.004, 0.006, 0.010], gain: [1.05, 0.99, 0.91],
+        vignette: 0.52, chroma: 0.0012, grain: 0.026,
+        haze: 0.018, hazeColor: [0.78, 0.56, 0.38], bloomTint: [1.0, 0.92, 0.80]
+      },
+      xray: {
+        bloomStrength: 0.95, bloomThreshold: 0.52, bloomKnee: 0.28, bloomRadius: 1.05,
+        exposure: 1.05, contrast: 1.16, saturation: 0.0,
+        lift: [0.0, 0.0, 0.0], gain: [1.0, 1.0, 1.0],
+        vignette: 0.58, chroma: 0.0006, grain: 0.036,
+        haze: 0.0, hazeColor: [0.0, 0.0, 0.0], bloomTint: [1.0, 1.0, 1.0]
+      },
+      nuclear: {
+        bloomStrength: 2.35, bloomThreshold: 0.55, bloomKnee: 0.35, bloomRadius: 1.25,
+        exposure: 1.08, contrast: 1.12, saturation: 0.0,
+        lift: [0.0, 0.0, 0.0], gain: [1.0, 1.0, 1.0],
+        vignette: 0.55, chroma: 0.0010, grain: 0.042,
+        haze: 0.0, hazeColor: [0.0, 0.0, 0.0], bloomTint: [1.0, 1.0, 1.0]
+      },
+      space: {
+        bloomStrength: 0.52, bloomThreshold: 0.80, bloomKnee: 0.24, bloomRadius: 1.15,
+        exposure: 1.0, contrast: 1.12, saturation: 0.96,
+        lift: [0.002, 0.004, 0.010], gain: [0.98, 1.0, 1.04],
+        vignette: 0.52, chroma: 0.0018, grain: 0.034,
+        haze: 0.0, hazeColor: [0.05, 0.06, 0.10], bloomTint: [0.96, 0.98, 1.04]
+      },
+      lidar: {
+        bloomStrength: 1.45, bloomThreshold: 0.38, bloomKnee: 0.25, bloomRadius: 1.10,
+        exposure: 1.08, contrast: 1.18, saturation: 0.0,
+        lift: [0.0, 0.0, 0.0], gain: [1.0, 1.0, 1.0],
+        vignette: 0.60, chroma: 0.0008, grain: 0.040,
+        haze: 0.0, hazeColor: [0.0, 0.0, 0.0], bloomTint: [1.0, 1.0, 1.0]
+      }
+    };
+
+    function blendLook(a, b, k) {
+      const out = {};
+      for (const key of Object.keys(a)) {
+        const va = a[key], vb = b[key];
+        out[key] = Array.isArray(va) ? va.map((x, i) => x + (vb[i] - x) * k) : va + (vb - va) * k;
+      }
+      return out;
+    }
+
+    function computeLook(t) {
+      let look;
+      if (t < 8.033) {
+        // Strict hard cut at 8.033s: no pre-transition washout
+        look = Object.assign({}, LOOKS.day);
+      } else if (t < 42.2) {
+        const nuc = smoothstep(30.4, 33.0, t) * (1 - smoothstep(34.6, 35.2, t)) + smoothstep(34.8, 37.0, t);
+        look = blendLook(LOOKS.xray, LOOKS.nuclear, Math.min(1, nuc));
+      } else if (t < 64.0) {
+        look = blendLook(LOOKS.nuclear, LOOKS.space, smoothstep(42.2, 43.4, t));
+      } else if (t < 72.5) {
+        look = blendLook(LOOKS.space, LOOKS.lidar, smoothstep(64.0, 64.6, t));
+        // Second blast flash
+        look.bloomStrength += 2.5 * smoothstep(69.2, 69.6, t) * (1 - smoothstep(70.2, 71.8, t));
+      } else {
+        look = Object.assign({}, LOOKS.lidar);
+      }
+      // Fade to black at the very end (no outro card)
+      look.fade = smoothstep(72.2, 73.4, t);
+      return look;
+    }
+
+    function getCameraShake(t) {
+      let amp = 0;
+      // 1. Sudden high-impact transition jolt (8.033s - 8.48s)
+      if (t >= 8.033 && t < 8.48) {
+        amp += 0.14 * Math.pow(1.0 - (t - 8.033) / 0.447, 2.0);
+      }
+      // 2. Coulomb eruption tremor (39.6s - 42.2s)
+      if (t >= 39.6 && t < 42.2) {
+        amp += 0.08 * smoothstep(39.6, 41.5, t);
+      }
+      // 3. Planetary shockwave / Moon engulfment tremor (54.1s - 55.6s)
+      if (t >= 54.1 && t < 55.6) {
+        amp += 0.09 * Math.sin(((t - 54.1) / 1.5) * Math.PI);
+      }
+      // 4. Violent particle explosion impact camera shake (69.3s - 72.4s)
+      if (t >= 69.3 && t < 72.4) {
+        const dt = t - 69.3;
+        const impactEnvelope = Math.exp(-dt * 1.15) * (1.0 + 0.35 * Math.sin(dt * 8.0));
+        amp += 0.16 * impactEnvelope;
+      }
+      if (amp <= 0.0001) return { x: 0, y: 0, z: 0 };
+      return {
+        x: (Math.sin(t * 97.3) * 0.65 + Math.cos(t * 143.7) * 0.35) * amp,
+        y: (Math.cos(t * 113.1) * 0.65 + Math.sin(t * 167.9) * 0.35) * amp,
+        z: Math.sin(t * 83.5) * amp * 0.5
+      };
+    }
+
+    let currentTime = 0;
+    let isPlaying = false;
+    let lastRaf = 0;
+
+    // =========================================================================
+    // MULTI-HARMONIC SKELETAL & PROP ANIMATION ENGINE (Daylight + 11x Slow-Mo)
+    // =========================================================================
+    function animateParkActors(simT, realT) {
+      // 1. Sculpted Dog 4-Leg Bounding Gallop & Tail Wag
+      const dPhase = simT * 5.2;
+      const jumpArc = Math.sin(dPhase);
+      dogGroup.position.x = -4.42 + simT * 0.22;
+      dogGroup.position.z = -4.5 + Math.sin(simT * 0.85) * 0.22;
+      dogGroup.position.y = 0.36 + Math.max(0, jumpArc) * 0.30 + Math.abs(jumpArc) * 0.08;
+      dogGroup.rotation.x = -Math.cos(dPhase) * 0.22;
+      dogGroup.rotation.z = Math.sin(simT * 2.6) * 0.04;
+
+      const dp = dogGroup.userData.parts;
+      if (dp) {
+        dp.legFL.rotation.x = 0.35 + Math.sin(dPhase + 0.4) * 0.55;
+        dp.legFR.rotation.x = 0.35 + Math.sin(dPhase + 0.85) * 0.55;
+        dp.legBL.rotation.x = -0.45 - Math.sin(dPhase + 0.2) * 0.58;
+        dp.legBR.rotation.x = -0.45 - Math.sin(dPhase + 0.65) * 0.58;
+        dp.tail.rotation.z = Math.sin(simT * 11.0) * 0.28;
+        dp.tail.rotation.x = -0.85 + Math.cos(dPhase) * 0.18;
+        dp.head.rotation.x = Math.cos(dPhase) * 0.12;
+      }
+
+      // 2. Articulated Humans & Props
+      animatedActors.forEach((act, idx) => {
+        const ph = act.phase !== undefined ? act.phase : idx * 1.3;
+        const breath = Math.sin(simT * 2.4 + ph);
+
+        if (act.type === 'sitter') {
+          if (act.head) {
+            act.head.rotation.y = Math.sin(simT * 1.35 + ph) * 0.22 + Math.sin(simT * 0.6 + ph * 1.7) * 0.09;
+            act.head.rotation.x = Math.cos(simT * 1.05 + ph) * 0.07;
+            act.head.rotation.z = Math.sin(simT * 0.85 + ph) * 0.04;
+          }
+          if (act.torso) {
+            act.torso.scale.set(1 + breath * 0.018, 1 + breath * 0.015, 1 + breath * 0.022);
+          }
+          if (act.armR && idx < 3) {
+            act.armR.rotation.x = -0.35 + Math.sin(simT * 1.7 + ph) * 0.14;
+            if (act.elbowR) act.elbowR.rotation.x = -0.58 + Math.cos(simT * 1.7 + ph) * 0.18;
+          }
+        } else if (act.type === 'reader') {
+          if (act.head) {
+            act.head.rotation.x = 0.28 + Math.sin(simT * 1.5 + ph) * 0.045;
+            act.head.rotation.y = Math.sin(simT * 0.85) * 0.14;
+          }
+          if (act.book) {
+            act.book.rotation.x = 0.55 + breath * 0.035;
+            act.book.rotation.z = Math.sin(simT * 0.85) * 0.04;
+          }
+          if (act.elbowR) {
+            act.elbowR.rotation.x = -0.92 + breath * 0.04;
+          }
+        } else if (act.type === 'runner') {
+          const rCycle = simT * 7.4;
+          act.group.position.x = act.startX - simT * 0.16;
+          act.group.position.y = Math.abs(Math.sin(rCycle)) * 0.09;
+          act.group.rotation.x = 0.12;
+          if (act.legL) act.legL.rotation.x = Math.sin(rCycle) * 0.65;
+          if (act.legR) act.legR.rotation.x = -Math.sin(rCycle) * 0.65;
+          if (act.armL) act.armL.rotation.x = -Math.sin(rCycle) * 0.52;
+          if (act.armR) act.armR.rotation.x = Math.sin(rCycle) * 0.52;
+          if (act.elbowL) act.elbowL.rotation.x = -0.65;
+          if (act.elbowR) act.elbowR.rotation.x = -0.65;
+          if (act.head) act.head.rotation.y = Math.sin(rCycle * 0.5) * 0.08;
+        } else if (act.type === 'frisbee_throw') {
+          // Wind-up (0..2.2s), throw release (2.2..3.0s), follow-through (3.0..8.033s)
+          const windK = smoothstep(0.5, 2.1, simT);
+          const releaseK = smoothstep(2.1, 2.9, simT);
+          const armSwing = lerp(-0.25, 0.95, windK) - releaseK * 1.85;
+          if (act.armR) {
+            act.armR.rotation.set(-0.75 + releaseK * 0.20, armSwing, -0.35 - releaseK * 0.25);
+          }
+          if (act.elbowR) {
+            act.elbowR.rotation.set(-0.65 + releaseK * 0.45, 0, 0.35);
+          }
+          act.group.rotation.y = act.startRotY + lerp(0, -0.32, windK) + releaseK * 0.58;
+          if (act.head) act.head.rotation.y = -0.25 - releaseK * 0.25;
+
+          if (act.disc) {
+            if (simT < 2.35) {
+              // Held in thrower's hand during windup
+              act.disc.position.set(
+                act.startX - 0.28 + Math.sin(simT * 2.0) * 0.08,
+                1.18 + windK * 0.08,
+                act.startZ + 0.32
+              );
+              act.disc.rotation.set(0.18, simT * 2.0, -0.22);
+            } else {
+              // Parabolic flight from thrower (-2.1, -5.0) toward jumping catcher (-4.95, -3.35)
+              const flyK = Math.min(1.0, (simT - 2.35) / (8.033 - 2.35));
+              act.disc.position.x = lerp(-2.12, -4.92, flyK);
+              act.disc.position.z = lerp(-5.05, -3.32, flyK);
+              act.disc.position.y = lerp(1.26, 1.88, flyK) + Math.sin(flyK * Math.PI) * 0.62;
+              act.disc.rotation.set(0.14, simT * 14.0, -0.24);
+            }
+          }
+        } else if (act.type === 'jump_catch') {
+          // Anticipation & leap into the air to reach peak at 8.033s
+          const leapK = smoothstep(5.4, 8.033, simT);
+          const prepDip = smoothstep(4.5, 5.4, simT) * (1 - smoothstep(5.4, 6.0, simT));
+          act.group.position.x = lerp(act.startX + 0.55, act.startX, leapK);
+          act.group.position.y = lerp(0.0, act.startY, leapK) - prepDip * 0.12;
+          act.group.rotation.z = lerp(-0.08, -0.44, leapK);
+          if (act.armL) act.armL.rotation.x = lerp(-0.6, -2.65, leapK);
+          if (act.armR) act.armR.rotation.x = lerp(-0.6, -2.75, leapK);
+          if (act.legL) act.legL.rotation.x = Math.sin(simT * 4.5) * (1 - leapK) * 0.35;
+          if (act.legR) act.legR.rotation.x = -Math.sin(simT * 4.5) * (1 - leapK) * 0.35;
+        } else if (act.type === 'folded_arms' || act.type === 'hands_on_hips') {
+          if (act.head) {
+            act.head.rotation.y = Math.sin(simT * 1.15 + ph) * 0.20;
+            act.head.rotation.x = Math.cos(simT * 0.9 + ph) * 0.05;
+          }
+          act.group.rotation.z = Math.sin(simT * 0.95 + ph) * 0.022;
+          if (act.torso) act.torso.scale.set(1 + breath * 0.015, 1 + breath * 0.015, 1 + breath * 0.02);
+        } else {
+          // Background park strollers & couples: gentle walking cycle & conversation
+          const wCycle = simT * 2.8 + ph;
+          const walkSpeed = (idx % 2 === 0 ? 0.06 : -0.05);
+          act.group.position.x = act.startX + Math.sin(simT * 0.35 + ph) * 0.35 + simT * walkSpeed * 0.3;
+          act.group.position.y = Math.abs(Math.sin(wCycle)) * 0.025;
+          if (act.legL) act.legL.rotation.x = Math.sin(wCycle) * 0.24;
+          if (act.legR) act.legR.rotation.x = -Math.sin(wCycle) * 0.24;
+          if (act.armL) act.armL.rotation.x = -Math.sin(wCycle) * 0.18;
+          if (act.armR) act.armR.rotation.x = Math.sin(wCycle) * 0.18;
+          if (act.head) act.head.rotation.y = Math.sin(simT * 1.2 + ph) * 0.18;
+        }
+      });
+
+      // 3. Subtle POV Hands organic inspection movement when visible
+      if (povHandsGroup && povHandsGroup.visible && povHandsGroup.children.length >= 2) {
+        const lh = povHandsGroup.children[0];
+        const rh = povHandsGroup.children[1];
+        lh.rotation.x = 0.16 + Math.sin(realT * 1.8) * 0.025;
+        lh.rotation.z = -0.10 + Math.cos(realT * 1.3) * 0.020;
+        rh.rotation.x = 0.16 + Math.cos(realT * 1.7) * 0.025;
+        rh.rotation.z = 0.10 + Math.sin(realT * 1.4) * 0.020;
+      }
+    }
+
+    // =========================================================================
+    // MASTER DETERMINISTIC FRAME UPDATE (t in 0.0s .. 80.0s)
+    // =========================================================================
+    function updateTimeline(t) {
+      currentTime = Math.max(0, Math.min(TOTAL_DURATION, t));
+      timeSlider.value = currentTime;
+
+      const mins = Math.floor(currentTime / 60);
+      const secs = (currentTime % 60).toFixed(3).padStart(6, '0');
+      timeDisplay.textContent = `0${mins}:${secs} / 01:20.000`;
+
+      for (let i = 0; i < CONFIG.scenes.length; i++) {
+        scenesListEl.children[i].classList.toggle(
+          'active',
+          currentTime >= CONFIG.scenes[i].start && currentTime < CONFIG.scenes[i].end
+        );
+      }
+
+      let activeSub = "";
+      for (const s of CONFIG.subtitles) {
+        if (currentTime >= s.start && currentTime <= s.end) {
+          activeSub = s.text;
+          break;
+        }
+      }
+      hudSubtitle.innerHTML = activeSub;
+
+      let sunScreenPos = null;
+      let handsGlowProg = 0;
+      let peopleGlowProg = 0;
+      let eruptionProg = 0;
+      let whiteoutAlpha = 0;
+      let earthAtmoMode = null;
+      let earthScreenRadius = 0;
+
+      outroLayer.style.opacity = "0";
+      hudMiddle.style.opacity = "1";
+      hudTimer.classList.remove('serif-back');
+
+      // Subtle handheld camera breathing micro-drift + subtle impact camera shake
+      const shake = getCameraShake(currentTime);
+      const camDriftX = Math.sin(currentTime * 1.15) * 0.022 + Math.cos(currentTime * 2.1) * 0.008 + shake.x;
+      const camDriftY = Math.cos(currentTime * 1.45) * 0.016 + Math.sin(currentTime * 2.4) * 0.006 + shake.y;
+
+      // -----------------------------------------------------------------------
+      // PHASE 1: CENTRAL PARK LOW-POLY CINEMATIC SUNSET (0.0s - 8.033s: frame_001..004)
+      // -----------------------------------------------------------------------
+      if (currentTime < 8.033) {
+        parkWorld.visible = true;
+        spaceWorld.visible = false;
+        lidarData.lidarWorld.visible = false;
+        starSystem.visible = false;
+        groundParticles.visible = false;
+        sandBombs.visible = false;
+        povHandsGroup.visible = false;
+
+        scene.background = skyDayTexture;
+        scene.fog = dayFog;
+        groundMesh.material = grassDayMat;
+        // Strong directional sunset lighting & deep sharp shadows
+        ambientLight.intensity = 0.14;
+        hemiLight.intensity = 0.36;
+        sunLight.intensity = 1.85;
+        sunLight.position.set(-22, 16, 15);
+
+        allRegisteredObjects.forEach(obj => {
+          obj.material = obj.userData.dayMat;
+          if (obj.userData.edges) obj.userData.edges.visible = false;
+        });
+
+        animateParkActors(currentTime, currentTime);
+
+        // Continuous cinematic smooth sweep across Central Park (0.0s -> 8.033s)
+        const sweepK = smoothstep(0.0, 8.033, currentTime);
+        camera.position.set(
+          lerp(0.85, -0.65, sweepK) + camDriftX,
+          lerp(1.52, 1.68, sweepK) + camDriftY,
+          lerp(9.1, 7.9, sweepK)
+        );
+        camera.lookAt(
+          lerp(0.35, -1.45, sweepK) + camDriftX * 1.5,
+          lerp(2.05, 2.22, sweepK) + camDriftY * 1.5,
+          -10.0
+        );
+
+        hudTop.style.display = (currentTime < 4.1) ? "flex" : "none";
+        hudLabel.textContent = "ELECTRONS DISAPPEAR IN";
+        const rem = Math.max(0, 8.033 - currentTime).toFixed(3);
+        hudTimer.textContent = `0:0${rem}`;
+        hudSubtrack.textContent = "EVERY ATOM ON EARTH HAS THEM";
+      }
+
+      // -----------------------------------------------------------------------
+      // PHASES 2-5: SUDDEN HIGH-IMPACT TRANSITION TO MINIMALIST WHITE WIREFRAME (8.033s - 42.2s)
+      // -----------------------------------------------------------------------
+      else if (currentTime >= 8.033 && currentTime < 42.2) {
+        parkWorld.visible = true;
+        spaceWorld.visible = false;
+        lidarData.lidarWorld.visible = false;
+        starSystem.visible = true;
+        groundParticles.visible = true;
+
+        // Pure pitch-black background (#000000), zero neon cast
+        scene.background = new THREE.Color(0x000000);
+        scene.fog = null;
+        groundMesh.material = groundXrayMat;
+        hudTop.style.display = "none";
+
+        // Sudden high-impact brilliant white flash on transition cut (8.033s..8.28s)
+        if (currentTime < 8.28) {
+          whiteoutAlpha = Math.max(0, Math.pow(1.0 - (currentTime - 8.033) / 0.247, 1.6));
+        }
+
+        // Ultra-slow-motion continuation (Time slowed down 11x -> subtle drifting motion in X-ray mode)
+        const slowSimT = 8.033 + (currentTime - 8.033) * 0.018;
+
+        handsGlowProg = smoothstep(30.6, 33.2, currentTime) * (1 - smoothstep(34.8, 35.4, currentTime));
+        peopleGlowProg = smoothstep(34.8, 37.2, currentTime);
+        eruptionProg = smoothstep(39.4, 41.6, currentTime);
+
+        allRegisteredObjects.forEach(obj => {
+          if (obj.userData.edges) obj.userData.edges.visible = true;
+          if (obj.userData.isHandSleeve && currentTime >= 30.6) {
+            obj.material = nuclearSleeveMat;
+          } else if (obj.userData.isHand && currentTime >= 30.6) {
+            obj.material = nuclearHandMat;
+          } else if (obj.userData.isPerson && peopleGlowProg > 0.15) {
+            obj.material = nuclearWhiteMat;
+          } else {
+            obj.material = obj.userData.xrayMat;
+          }
+        });
+
+        if (currentTime >= 27.8) {
+          sandBombs.visible = true;
+          const bProg = smoothstep(27.8, 32.5, currentTime);
+          bombMat.opacity = Math.min(1.0, 0.35 + bProg * 0.65);
+          bombMatFine.opacity = Math.min(0.95, 0.45 + bProg * 0.50);
+          bombMat.size = (7.2 + bProg * 3.8) * DPR;
+          bombMatFine.size = (2.8 + bProg * 1.1) * DPR;
+          gpMat.size = (2.0 + bProg * 0.4) * DPR;
+          gpMat.color.setHex(0xffffff);
+        } else {
+          sandBombs.visible = false;
+          gpMat.size = 2.0 * DPR;
+          gpMat.color.setHex(0xffffff);
+        }
+
+        if (currentTime < 14.5) {
+          // 8.033s - 14.5s: X-Ray park (frame_005), tilt up toward open sky over midrise buildings for Sun flare (frame_006), pan to leaping dog (frame_007)
+          povHandsGroup.visible = false;
+
+          if (currentTime < 9.5) {
+            camera.position.set(0.15 + camDriftX, 1.62 + camDriftY, 8.4 + shake.z);
+            camera.lookAt(0.10 + shake.x * 2.5, 2.15 + shake.y * 2.5, -10.0);
+          } else if (currentTime < 11.8) {
+            const upK = smoothstep(9.5, 10.2, currentTime) * (1 - smoothstep(11.2, 11.8, currentTime));
+            camera.position.set(lerp(0.15, -2.5, upK) + camDriftX, 1.58 + camDriftY, lerp(8.4, 5.5, upK));
+            camera.lookAt(lerp(0.10, -6.5, upK), lerp(2.15, 3.6, upK), -10.0);
+            sunScreenPos = {
+              visible: true,
+              x: VIEW_W * 0.67,
+              y: VIEW_H * 0.285
+            };
+          } else {
+            // Frame_007 (11.8s - 14.5s): Frame frozen leaping dog & Y-branch trees
+            const dogPan = smoothstep(11.8, 13.0, currentTime);
+            camera.position.set(lerp(-1.5, -2.1, dogPan) + camDriftX, 1.45 + camDriftY, lerp(6.5, 4.2, dogPan));
+            camera.lookAt(lerp(-1.5, -2.5, dogPan), 1.85, -10.0);
+          }
+        } else if (currentTime < 19.8) {
+          // 14.5s - 19.8s (frame_008 & frame_010): Tilt down so only the front checkered edge of picnic blanket sits at top 10% of screen & 3D POV hands sit at bottom 42%!
+          const tiltDown = smoothstep(14.5, 16.0, currentTime);
+          povHandsGroup.visible = (currentTime >= 15.6);
+          camera.position.set(0.08 + camDriftX * 0.5, lerp(1.95, 1.72, tiltDown) + camDriftY * 0.5, lerp(6.9, 6.25, tiltDown));
+          camera.lookAt(0.08, lerp(1.2, -2.65, tiltDown), lerp(-8.0, 1.25, tiltDown));
+        } else if (currentTime < 27.8) {
+          // 19.8s - 27.8s (frame_012 & frame_013): Look up at Woman in Skirt + Frisbee Jumper (frame_012), then pan back to Picnic Blanket (frame_013)
+          povHandsGroup.visible = false;
+          const panRight = smoothstep(23.2, 25.2, currentTime);
+          camera.position.set(lerp(-2.2, 0.15, panRight) + camDriftX, 1.58 + camDriftY, lerp(6.8, 8.4, panRight));
+          camera.lookAt(lerp(-2.5, 0.10, panRight), 2.05, -10.0);
+        } else if (currentTime < 34.8) {
+          // 27.8s - 34.8s (frame_015 & frame_017): Close-up of sparkling ground (frame_015), then glowing nuclear POV hands with blanket edge at top 10% (frame_017)!
+          const showHands = (currentTime >= 30.6);
+          povHandsGroup.visible = showHands;
+          const liftBlanket = smoothstep(30.4, 31.6, currentTime);
+          camera.position.set(0.08 + camDriftX * 0.5, 1.72 + camDriftY * 0.5, 6.25);
+          camera.lookAt(0.08, lerp(-3.25, -2.65, liftBlanket), lerp(1.9, 1.25, liftBlanket));
+        } else {
+          // 34.8s - 42.2s (frame_019 & frame_021): Look up at glowing nuclear humans + Sun flare in open sky above midrise buildings (frame_019), then cloud eruption (frame_021)!
+          povHandsGroup.visible = false;
+          const panSky = smoothstep(38.8, 40.8, currentTime);
+          camera.position.set(lerp(-3.4, 0.15, panSky) + camDriftX, 1.55 + camDriftY, lerp(4.2, 8.2, panSky) + shake.z);
+          camera.lookAt(lerp(-6.8, 0.10, panSky) + shake.x * 2.0, lerp(2.85, 3.2, panSky) + shake.y * 2.0, -10.0);
+
+          if (currentTime < 39.6) {
+            sunScreenPos = {
+              visible: true,
+              x: VIEW_W * 0.67,
+              y: VIEW_H * 0.285
+            };
+          }
+          whiteoutAlpha = smoothstep(41.2, 42.2, currentTime);
+        }
+
+        animateParkActors(slowSimT, currentTime);
+        // Ensure leaping dog stays at exact peak bound pose during X-Ray shots
+        dogGroup.position.set(-2.65, 0.62 + Math.sin(currentTime * 0.8) * 0.012, -4.5);
+        dogGroup.rotation.x = -0.18;
+
+        hudLabel.textContent = "ELECTRONS RETURN IN";
+        const remSlow = Math.max(0, 5.002 - (currentTime - 8.033) / 11.21).toFixed(3);
+        hudTimer.textContent = `0:0${remSlow}`;
+        hudSubtrack.textContent = "TIME SLOWED DOWN 11×";
+      }
+
+      // -----------------------------------------------------------------------
+      // PHASE 6: DYNAMIC FAST-PACED ZOOM-OUT INTO SPACE & MOON ENGULFMENT (42.2s - 64.0s)
+      // -----------------------------------------------------------------------
+      else if (currentTime >= 42.2 && currentTime < 64.0) {
+        parkWorld.visible = false;
+        spaceWorld.visible = true;
+        lidarData.lidarWorld.visible = false;
+        starSystem.visible = true;
+        povHandsGroup.visible = false;
+        hudTop.style.display = "none";
+
+        scene.background = new THREE.Color(0x000000);
+        scene.fog = null;
+        hemiLight.intensity = 0.0;
+        ambientLight.intensity = 0.26;
+        sunLight.intensity = 1.25;
+        sunLight.position.set(-16, -12, 18);
+
+        if (currentTime < 43.0) {
+          whiteoutAlpha = 1.0 - (currentTime - 42.2) / 0.8;
+        }
+
+        earthSphere.rotation.y = currentTime * 0.08;
+        earthSphere.rotation.z = 0.25;
+        moonMat.opacity = 1.0;
+
+        const milesVal = Math.round(7918 + (currentTime - 41.88) * 33780);
+        const milesFormatted = milesVal.toLocaleString('en-US');
+
+        if (currentTime < 49.2) {
+          // Shot 6A (42.2s - 49.2s): Dynamic fast-paced zoom-out into space as Earth expands!
+          const expK = (currentTime - 42.2) / (49.2 - 42.2);
+          const zoomOutCurve = 1.0 - Math.pow(1.0 - expK, 2.4);
+          const scale = lerp(1.08, 1.85, expK);
+          earthSphere.visible = true;
+          earthSphere.scale.set(scale, scale, scale);
+          earthSphere.position.set(0, 0, 0);
+          moonSphere.visible = false;
+
+          camera.position.set(shake.x, shake.y, lerp(11.2, 19.8, zoomOutCurve));
+          camera.lookAt(0, 0, 0);
+
+          hudSubtrack.textContent = `EARTH IS NOW ${milesFormatted} MILES WIDE`;
+        } else if (currentTime < 52.2) {
+          // Shot 6B (49.2s - 52.2s: frame_026): Swirling Earth fills the entire screen; small dark Moon silhouette in center!
+          const zoomB = (currentTime - 49.2) / 3.0;
+          earthSphere.visible = true;
+          const bScale = lerp(3.6, 4.1, zoomB);
+          earthSphere.scale.set(bScale, bScale, bScale);
+          earthSphere.position.set(0, 0, 0);
+
+          moonSphere.visible = true;
+          moonSphere.scale.set(0.50, 0.50, 0.50);
+          moonSphere.position.set(0.16, 0.14, 13.5);
+          ambientLight.intensity = 0.06;
+          sunLight.position.set(-5, -5, -20);
+
+          camera.position.set(shake.x, shake.y, lerp(17.2, 18.2, zoomB));
+          camera.lookAt(0, 0, 0);
+
+          hudSubtrack.textContent = `EARTH IS NOW ${milesFormatted} MILES WIDE`;
+        } else if (currentTime < 55.4) {
+          // Shot 6C (52.2s - 55.4s: frame_027 & frame_028): Cratered Moon in starry sky above rising curved Earth limb that engulfs it!
+          earthSphere.visible = false;
+          const engulfK = smoothstep(54.25, 55.05, currentTime);
+          moonSphere.visible = (engulfK < 0.99);
+          moonMat.opacity = Math.max(0, 1.0 - engulfK);
+          const mScale = 1.30 * (1.0 - engulfK * 0.25);
+          moonSphere.scale.set(mScale, mScale, mScale);
+          const jitterX = engulfK > 0 ? Math.sin(currentTime * 95.0) * 0.06 * engulfK : 0;
+          const jitterY = engulfK > 0 ? Math.cos(currentTime * 110.0) * 0.05 * engulfK : 0;
+          moonSphere.position.set(jitterX, 2.38 + jitterY, 0);
+          moonSphere.rotation.y = -1.57 + (currentTime - 52.2) * 0.08;
+
+          const riseLight = smoothstep(52.2, 54.8, currentTime);
+          ambientLight.intensity = 0.30 + riseLight * 0.25;
+          sunLight.intensity = 1.15 + riseLight * 0.55;
+          sunLight.position.set(-10, -18, 16);
+
+          camera.position.set(shake.x, shake.y, 16.5 + shake.z);
+          camera.lookAt(shake.x * 1.5, shake.y * 1.5, 0);
+
+          earthAtmoMode = 'moon_horizon';
+          hudSubtrack.textContent = `EARTH IS NOW ${milesFormatted} MILES WIDE`;
+        } else {
+          // Shot 6D (55.4s - 64.0s: frame_029..032): "THE MOON IS GONE" — Skimming high above swirling Earth horizon
+          earthSphere.visible = false;
+          moonSphere.visible = false;
+          camera.position.set(shake.x, shake.y, 16.5);
+          camera.lookAt(0, 0, 0);
+
+          earthAtmoMode = 'horizon';
+          hudSubtrack.textContent = "THE MOON IS GONE";
+        }
+
+        hudLabel.textContent = "ELECTRONS RETURN IN";
+        const remSpace = Math.max(0, 5.002 - (currentTime - 8.033) / 11.21).toFixed(3);
+        hudTimer.textContent = `0:0${remSpace}`;
+      }
+
+      // -----------------------------------------------------------------------
+      // PHASE 7: ELECTRONS BACK — 115K LIDAR POINT CLOUD & VIOLENT PARTICLE EXPLOSION (64.0s - 72.5s)
+      // -----------------------------------------------------------------------
+      else if (currentTime >= 64.0 && currentTime < 72.5) {
+        parkWorld.visible = false;
+        spaceWorld.visible = false;
+        lidarData.lidarWorld.visible = true;
+        starSystem.visible = true;
+        povHandsGroup.visible = false;
+        hudTop.style.display = "none";
+
+        scene.background = new THREE.Color(0x000000);
+        scene.fog = null;
+
+        const posArr = lidarData.lidarGeo.attributes.position.array;
+        const blastDt = Math.max(0, currentTime - 69.3);
+        lidarData.lidarWireGroup.visible = (blastDt < 0.15);
+
+        // Violent 3D radial + vertical particle explosion at t >= 69.3s
+        const blastAccel = blastDt > 0 ? Math.pow(blastDt, 1.65) * 1.35 : 0;
+        for (let i = 0; i < lidarData.lidarCount; i++) {
+          const i3 = i * 3;
+          posArr[i3]     = lidarData.lidarBasePos[i3]     + Math.sin(currentTime * 2.2 + i) * 0.005 + blastAccel * lidarData.lidarVelX[i];
+          posArr[i3 + 1] = lidarData.lidarBasePos[i3 + 1] + blastAccel * lidarData.lidarVelY[i];
+          posArr[i3 + 2] = lidarData.lidarBasePos[i3 + 2] + blastAccel * lidarData.lidarVelZ[i];
+        }
+        lidarData.lidarGeo.attributes.position.needsUpdate = true;
+
+        // Calibrated camera + subtle camera shake on explosion impact!
+        const driftK = smoothstep(64.0, 69.3, currentTime);
+        camera.position.set(
+          lerp(-0.55, 0.35, driftK) + shake.x,
+          1.95 + shake.y,
+          lerp(8.8, 7.6, driftK) + shake.z
+        );
+        camera.lookAt(
+          lerp(-0.2, 0.2, driftK) + shake.x * 2.2,
+          4.6 + shake.y * 2.2,
+          -16.0
+        );
+
+        hudLabel.textContent = "ELECTRONS";
+        hudTimer.textContent = "BACK";
+        hudTimer.classList.add('serif-back');
+
+        if (currentTime < 66.5) {
+          hudSubtrack.textContent = "EARTH ISN'T";
+        } else if (currentTime < 69.3) {
+          hudSubtrack.textContent = "CENTRAL PARK, 5 SECONDS LATER";
+        } else {
+          hudSubtrack.textContent = "SAME ENERGY AS THE FIRST BLAST";
+        }
+
+        if (currentTime >= 71.7) {
+          hudMiddle.style.opacity = String(Math.max(0, 1 - (currentTime - 71.7) / 0.6));
+        }
+      }
+
+      // -----------------------------------------------------------------------
+      // PHASE 8: OUTRO BLACK SCREEN & FINAL SCIENTIFIC CARD (72.5s - 80.0s: frame_037..040)
+      // -----------------------------------------------------------------------
+      else {
+        parkWorld.visible = false;
+        spaceWorld.visible = false;
+        lidarData.lidarWorld.visible = false;
+        starSystem.visible = false;
+        hudMiddle.style.opacity = "0";
+        hudTop.style.display = "none";
+        outroLayer.style.opacity = String(smoothstep(73.4, 74.2, currentTime));
+      }
+
+      WorldFXOverlay.renderOverlays(fxCtx, VIEW_W, VIEW_H, {
+        t: currentTime,
+        sunScreenPos,
+        handsGlowProg,
+        peopleGlowProg,
+        eruptionProg,
+        whiteoutAlpha,
+        earthAtmoMode,
+        earthScreenRadius,
+        earthMapCanvas: earthCloudTex.image
+      });
+
+      postFX.render(scene, camera, fxCanvas, currentTime, computeLook(currentTime));
+    }
+
+    // --- INTERACTIVE PLAYBACK LOOP ---
+    function animate(now) {
+      requestAnimationFrame(animate);
+      if (!lastRaf) lastRaf = now;
+      const dt = (now - lastRaf) / 1000;
+      lastRaf = now;
+
+      if (isPlaying) {
+        if (!audioTrack.paused) {
+          updateTimeline(audioTrack.currentTime);
+          if (audioTrack.ended || currentTime >= TOTAL_DURATION) {
+            pauseSim();
+          }
+        } else {
+          updateTimeline(currentTime + dt);
+          if (currentTime >= TOTAL_DURATION) {
+            pauseSim();
+          }
+        }
+      }
+    }
+    requestAnimationFrame(animate);
+
+    const btnPlay = document.getElementById('btn-play');
+    const playText = document.getElementById('play-text');
+    const playIcon = document.getElementById('play-icon');
+    const btnReset = document.getElementById('btn-reset');
+
+    function playSim() {
+      isPlaying = true;
+      playText.textContent = "Pausar";
+      playIcon.innerHTML = "&#10074;&#10074;";
+      audioTrack.currentTime = currentTime;
+      audioTrack.play().catch(() => {});
+    }
+
+    function pauseSim() {
+      isPlaying = false;
+      playText.textContent = "Reproducir con Voz + Audio";
+      playIcon.innerHTML = "&#9654;";
+      audioTrack.pause();
+    }
+
+    btnPlay.onclick = () => {
+      if (isPlaying) pauseSim();
+      else playSim();
+    };
+
+    btnReset.onclick = () => {
+      pauseSim();
+      seekTo(0);
+    };
+
+    timeSlider.oninput = (e) => {
+      seekTo(parseFloat(e.target.value));
+    };
+
+    function seekTo(sec) {
+      audioTrack.currentTime = sec;
+      updateTimeline(sec);
+    }
+
+    window.renderAtTime = function(sec) {
+      isPlaying = false;
+      updateTimeline(sec);
+    };
+
+    updateTimeline(0);
+  </script>
+</body>
+</html>

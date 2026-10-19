@@ -1,0 +1,38 @@
+# Dependencias
+node_modules/
+package-lock.json
+
+# Archivos multimedia muy pesados (>100MB) y vídeos renderizados
+output/
+*.mp4
+*.blend1
+assets/references/*.mp4
+assets/references/*.blend1
+blender/*.blend1
+
+# Archivos de caché y temporales de SO
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
+temp_speech/
+v4_verify/
+v5_verify/
+ref_analysis/
+
+# Archivos de audio grandes o generados automáticamente
+assets/audio/*.wav
+soundtrack_cinematic.wav
+
+# Entornos virtuales de Python
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# Claves de API y credenciales locales
+.env
+.env.local
+*.pem
+*.key
+credentials.json

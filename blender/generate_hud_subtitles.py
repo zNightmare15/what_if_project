@@ -1,0 +1,80 @@
+def generate_ass_subtitles(filepath="d:/Escritorio/what_if_project/hud_overlay.ass"):
+    content = """[Script Info]
+Title: What If Electrons Disappeared
+ScriptType: v4.00+
+WrapStyle: 0
+ScaledBorderAndShadow: yes
+YCbCr Matrix: TV.709
+PlayResX: 1080
+PlayResY: 1920
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: MainTitle,Georgia,44,&H00FFFFFF,&H000000FF,&H80000000,&H80000000,0,0,0,0,100,100,1,0,1,1.5,1,8,40,40,460,1
+Style: TimerHeader,Georgia,18,&H00D0D0D0,&H000000FF,&H80000000,&H80000000,1,0,0,0,100,100,2,0,1,1,0,7,80,40,780,1
+Style: TimerDigits,Georgia,46,&H00FFFFFF,&H000000FF,&H80000000,&H80000000,0,0,0,0,100,100,2,0,1,1.5,1,7,80,40,810,1
+Style: TimerFooter,Georgia,18,&H00B0B0B0,&H000000FF,&H80000000,&H80000000,1,0,0,0,100,100,2,0,1,1,0,7,80,40,865,1
+Style: SubtitleSerif,Georgia,34,&H00FFFFFF,&H000000FF,&H80000000,&H80000000,0,1,0,0,100,100,1,0,1,1.5,1,2,60,60,620,1
+Style: OutroTitle,Georgia,44,&H00FFFFFF,&H000000FF,&H80000000,&H80000000,0,0,0,0,100,100,1,0,1,1.5,1,5,60,60,60,1
+Style: OutroSub,Georgia,20,&H00C0C0C0,&H000000FF,&H80000000,&H80000000,1,0,0,0,100,100,2,0,1,1,0,5,60,60,160,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+
+; Scene 1: Intro (0s - 7.5s)
+Dialogue: 0,0:00:00.00,0:00:07.50,MainTitle,,0,0,0,,What if {\\c&HFFB870&}electrons{\\c&HFFFFFF&} disappeared\\Nfor 5 seconds?
+Dialogue: 0,0:00:00.00,0:00:07.50,TimerHeader,,0,0,0,,ELECTRONS DISAPPEAR IN
+Dialogue: 0,0:00:00.00,0:00:02.00,TimerDigits,,0,0,0,,0:07.500
+Dialogue: 0,0:00:02.00,0:00:04.00,TimerDigits,,0,0,0,,0:05.500
+Dialogue: 0,0:00:04.00,0:00:06.00,TimerDigits,,0,0,0,,0:03.500
+Dialogue: 0,0:00:06.00,0:00:07.50,TimerDigits,,0,0,0,,0:01.500
+Dialogue: 0,0:00:00.00,0:00:07.50,TimerFooter,,0,0,0,,EVERY ATOM ON EARTH HAS THEM
+
+; Scene 2: Wireframe Sun & Park (7.5s - 14.5s)
+Dialogue: 0,0:00:07.50,0:00:14.50,TimerHeader,,0,0,0,,ELECTRONS RETURN IN
+Dialogue: 0,0:00:07.50,0:00:10.00,TimerDigits,,0,0,0,,0:04.821
+Dialogue: 0,0:00:10.00,0:00:14.50,TimerDigits,,0,0,0,,0:04.450
+Dialogue: 0,0:00:07.50,0:00:14.50,TimerFooter,,0,0,0,,TIME SLOWED DOWN 11x
+Dialogue: 0,0:00:08.50,0:00:14.00,SubtitleSerif,,0,0,0,,Light now passes straight through everything.
+
+; Scene 3: Hands POV (14.5s - 24.2s)
+Dialogue: 0,0:00:14.50,0:00:24.20,TimerHeader,,0,0,0,,ELECTRONS RETURN IN
+Dialogue: 0,0:00:14.50,0:00:19.00,TimerDigits,,0,0,0,,0:04.107
+Dialogue: 0,0:00:19.00,0:00:24.20,TimerDigits,,0,0,0,,0:03.620
+Dialogue: 0,0:00:14.50,0:00:24.20,TimerFooter,,0,0,0,,TIME SLOWED DOWN 11x
+Dialogue: 0,0:00:15.50,0:00:23.50,SubtitleSerif,,0,0,0,,You can see the stars through your hands.
+
+; Scene 4: Repulsion & Disintegration (24.2s - 38.6s)
+Dialogue: 0,0:00:24.20,0:00:38.60,TimerHeader,,0,0,0,,ELECTRONS RETURN IN
+Dialogue: 0,0:00:24.20,0:00:31.00,TimerDigits,,0,0,0,,0:03.035
+Dialogue: 0,0:00:31.00,0:00:38.60,TimerDigits,,0,0,0,,0:02.410
+Dialogue: 0,0:00:24.20,0:00:38.60,TimerFooter,,0,0,0,,TIME SLOWED DOWN 11x
+Dialogue: 0,0:00:26.00,0:00:37.00,SubtitleSerif,,0,0,0,,Positive charges violently repel, shattering all matter.
+
+; Scene 5: Celestial Scale - Earth Expanding (38.6s - 62.5s)
+Dialogue: 0,0:00:38.60,0:00:62.50,TimerHeader,,0,0,0,,ELECTRONS RETURN IN
+Dialogue: 0,0:00:38.60,0:00:46.00,TimerDigits,,0,0,0,,0:01.696
+Dialogue: 0,0:00:46.00,0:00:54.00,TimerDigits,,0,0,0,,0:01.071
+Dialogue: 0,0:00:54.00,0:00:62.50,TimerDigits,,0,0,0,,0:00.412
+Dialogue: 0,0:00:38.60,0:00:48.00,TimerFooter,,0,0,0,,EARTH IS NOW 121,035 MILES WIDE
+Dialogue: 0,0:00:48.00,0:00:62.50,TimerFooter,,0,0,0,,EARTH IS NOW 353,387 MILES WIDE
+Dialogue: 0,0:00:41.00,0:00:50.00,SubtitleSerif,,0,0,0,,Earth comes apart at nearly light speed.
+Dialogue: 0,0:00:51.00,0:00:61.00,SubtitleSerif,,0,0,0,,More than the Milky Way will ever shine.
+
+; Scene 6: LiDAR Point Cloud (62.5s - 75.0s)
+Dialogue: 0,0:00:62.50,0:00:75.00,TimerHeader,,0,0,0,,ELECTRONS
+Dialogue: 0,0:00:62.50,0:00:75.00,TimerDigits,,0,0,0,,BACK
+Dialogue: 0,0:00:62.50,0:00:75.00,TimerFooter,,0,0,0,,EARTH ISN'T
+Dialogue: 0,0:00:63.50,0:00:73.50,SubtitleSerif,,0,0,0,,Five seconds later, electrons return to a world that no longer exists.
+
+; Scene 7: Outro (75.0s - 80.0s)
+Dialogue: 0,0:00:75.00,0:00:80.00,OutroTitle,,0,0,0,,What if {\\c&HFFB870&}electrons{\\c&HFFFFFF&} disappeared\\Nfor 5 seconds?
+Dialogue: 0,0:00:75.00,0:00:80.00,OutroSub,,0,0,0,,ELECTRONS ARE 0.03% OF YOUR MASS\\NAND EVERY CHEMICAL BOND IN YOUR BODY
+"""
+    with open(filepath, "w", encoding="utf-8") as f:
+        f.write(content)
+    print(f"ASS subtitles created at: {filepath}")
+
+if __name__ == "__main__":
+    generate_ass_subtitles()
+
