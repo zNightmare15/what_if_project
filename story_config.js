@@ -578,39 +578,39 @@ window.STORY_CONFIG = {
   "scenes": [
     {
       "id": 1,
-      "name": "Central Park Daylight & Orbiting Mass",
+      "name": "Coastal Highway & Suspension Bridge at Sunset",
       "start": 0,
       "end": 8.033,
-      "badge": "Low-Poly Daylight",
+      "badge": "Low-Poly Sunset",
       "color": "#10b981",
-      "desc": "Picnic en Central Park mientras la rotación terrestre mantiene todo anclado por gravedad."
+      "desc": "Tráfico sobre el puente colgante costero mientras la rotación terrestre mantiene todo anclado por gravedad."
     },
     {
       "id": 2,
-      "name": "Gravity Vanishes: Weightless X-Ray & Sun",
+      "name": "Gravity Vanishes: Vehicles Lift Off Deck",
       "start": 8.033,
       "end": 14.8,
       "badge": "X-Ray + Zero-G",
       "color": "#0ea5e9",
-      "desc": "Tiempo ralentizado 11x. El aire escapa al espacio y el perro queda flotando en trayectoria tangencial."
+      "desc": "Tiempo ralentizado 11x. Los vehículos pierden tracción y comienzan a flotar en trayectoria tangencial."
     },
     {
       "id": 3,
-      "name": "Vacuum & Weightless Hands (POV)",
+      "name": "Driver Cockpit POV: Floating Steering Wheel & Items",
       "start": 14.8,
       "end": 19.8,
-      "badge": "1st Person Hands",
+      "badge": "Cockpit POV",
       "color": "#6366f1",
-      "desc": "Tus manos flotan frente a ti mientras la presión atmosférica cae a cero instantáneamente."
+      "desc": "Dentro del vehículo: el volante, las llaves y un vaso de café flotan ingrávidos frente a ti."
     },
     {
       "id": 4,
-      "name": "Centrifugal Drift & Unbound Matter",
+      "name": "Centrifugal Flight: Ocean Spires & Drifting Highway",
       "start": 19.8,
       "end": 28,
       "badge": "Centrifugal",
       "color": "#8b5cf6",
-      "desc": "Sin gravedad que curve la trayectoria, océanos, personas y edificios salen disparados en línea recta."
+      "desc": "Sin gravedad que curve la trayectoria, vehículos y géiseres de agua oceánica salen disparados en línea recta."
     },
     {
       "id": 5,
@@ -632,12 +632,12 @@ window.STORY_CONFIG = {
     },
     {
       "id": 7,
-      "name": "Gravity Returns: LiDAR City & Catastrophic Collapse",
+      "name": "Gravity Returns: 120k LiDAR Bridge Crash & Impact Slam",
       "start": 64,
       "end": 72.5,
       "badge": "LiDAR PointCloud",
       "color": "#3b82f6",
-      "desc": "La gravedad regresa tras 5 segundos; toda la corteza levantada colapsa liberando energía sísmica global."
+      "desc": "La gravedad regresa tras 5 segundos; todos los vehículos suspendidos caen e impactan violentamente."
     },
     {
       "id": 8,
@@ -653,7 +653,7 @@ window.STORY_CONFIG = {
     {
       "start": 5,
       "end": 7.8,
-      "text": "You're in Central Park, New York."
+      "text": "You're driving on a coastal highway."
     },
     {
       "start": 8.5,
@@ -663,12 +663,12 @@ window.STORY_CONFIG = {
     {
       "start": 15.5,
       "end": 19.4,
-      "text": "You start drifting upward in a straight line."
+      "text": "Your car lifts off the asphalt into mid-air."
     },
     {
       "start": 20.3,
       "end": 23.9,
-      "text": "Earth's spin flings the oceans into the sky."
+      "text": "Earth's spin flings the ocean into the sky."
     },
     {
       "start": 24.3,
@@ -703,7 +703,7 @@ window.STORY_CONFIG = {
     {
       "start": 68.4,
       "end": 71.8,
-      "text": "And an entire planet falls back down on itself."
+      "text": "And an entire highway falls back down on itself."
     }
   ]
 };

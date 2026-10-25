@@ -400,6 +400,7 @@
   <script src="world_textures.js"></script>
   <script src="world_actors.js"></script>
   <script src="world_skyline_and_lidar.js"></script>
+  <script src="world_gravity_scene.js"></script>
   <script src="world_fx_overlay.js"></script>
   <script src="world_postfx.js"></script>
   <script>
@@ -876,6 +877,24 @@
       sRand
     );
 
+    // =========================================================================
+    // BUILD WORLD 4: GRAVITY SIMULATION BESPOKE 3D SCENE (Highway, Bridge, Vehicles, Cockpit)
+    // =========================================================================
+    const isGravityStory = (CONFIG.id === 'gravity_5s_example');
+    let gravityData = null;
+    if (isGravityStory && window.WorldGravityScene) {
+      parkWorld.visible = false;
+      lidarData.lidarWorld.visible = false;
+      gravityData = WorldGravityScene.buildGravityWorld(
+        scene,
+        registerStylizedMesh,
+        mats,
+        { grassDayTex, groundXrayTex },
+        sRand,
+        dotSpriteTex
+      );
+    }
+
     // --- DOM HUD SETUP ---
     const hudTop = document.getElementById('hud-top');
     const hudMiddle = document.getElementById('hud-middle');
@@ -1165,6 +1184,397 @@
     }
 
     // =========================================================================
+    // BESPOKE GRAVITY SIMULATION TIMELINE (Highway, Bridge, Floating Cars, Cockpit POV, Space, LiDAR)
+    // =========================================================================
+    function updateGravityTimeline(currentTime, shake, camDriftX, camDriftY) {
+      parkWorld.visible = false;
+      lidarData.lidarWorld.visible = false;
+      povHandsGroup.visible = false;
+
+      let sunScreenPos = null;
+      let handsGlowProg = 0;
+      let peopleGlowProg = 0;
+      let eruptionProg = 0;
+      let whiteoutAlpha = 0;
+      let earthAtmoMode = null;
+      let earthScreenRadius = 0;
+
+      // 1. PHASE 1: COASTAL SUSPENSION BRIDGE & HIGHWAY SUNSET (0.0s - 8.033s)
+      if (currentTime < 8.033) {
+        gravityData.gravityWorld.visible = true;
+        spaceWorld.visible = false;
+        gravityData.lidarData.lidarWorld.visible = false;
+        starSystem.visible = false;
+        gravityData.cockpit.cockpitGroup.visible = false;
+        gravityData.waterSpires.spiresGroup.visible = false;
+
+        scene.background = skyDayTexture;
+        scene.fog = dayFog;
+        ambientLight.intensity = 0.18;
+        hemiLight.intensity = 0.42;
+        sunLight.intensity = 2.1;
+        sunLight.position.set(-25, 20, 20);
+
+        allRegisteredObjects.forEach(obj => {
+          obj.material = obj.userData.dayMat;
+          if (obj.userData.edges) obj.userData.edges.visible = false;
+        });
+
+        // Vehicles advance along highway at realistic speeds
+        gravityData.vehicles.forEach(v => {
+          v.group.position.y = 0;
+          v.group.rotation.set(0, 0, 0);
+          v.wheels.forEach(w => {
+            w.rotation.x = currentTime * v.baseSpeed * 0.8;
+          });
+          v.group.position.z = v.initZ + currentTime * v.baseSpeed;
+          if (v.group.position.z > 120) v.group.position.z -= 240;
+        });
+
+        const sweepK = smoothstep(0.0, 8.033, currentTime);
+        camera.position.set(
+          lerp(6.8, -4.5, sweepK) + camDriftX,
+          lerp(2.2, 4.4, sweepK) + camDriftY,
+          lerp(-85, -15, sweepK) + shake.z
+        );
+        camera.lookAt(
+          lerp(1.5, 0.2, sweepK) + shake.x * 1.5,
+          lerp(1.8, 3.8, sweepK) + shake.y * 1.5,
+          lerp(-35, 40, sweepK)
+        );
+
+        hudTop.style.display = (currentTime < 4.1) ? "flex" : "none";
+        hudLabel.textContent = (CONFIG.timerPhases && CONFIG.timerPhases[0]) ? CONFIG.timerPhases[0].label : "GRAVITY DISAPPEARS IN";
+        const rem = Math.max(0, 8.033 - currentTime).toFixed(3);
+        hudTimer.textContent = `0:0${rem}`;
+        hudSubtrack.textContent = (CONFIG.subtracks && CONFIG.subtracks[0]) ? CONFIG.subtracks[0].text : "EARTH SPINS AT 1,037 MPH AT THE EQUATOR";
+      }
+
+      // 2. PHASE 2: SUDDEN FLASH CUT & ZERO-G LIFT-OFF (8.033s - 15.0s)
+      else if (currentTime >= 8.033 && currentTime < 15.0) {
+        gravityData.gravityWorld.visible = true;
+        spaceWorld.visible = false;
+        gravityData.lidarData.lidarWorld.visible = false;
+        starSystem.visible = true;
+        gravityData.cockpit.cockpitGroup.visible = false;
+        gravityData.waterSpires.spiresGroup.visible = true;
+
+        scene.background = new THREE.Color(0x000000);
+        scene.fog = null;
+        hudTop.style.display = "none";
+
+        if (currentTime < 8.28) {
+          whiteoutAlpha = Math.max(0, Math.pow(1.0 - (currentTime - 8.033) / 0.247, 1.6));
+        }
+
+        allRegisteredObjects.forEach(obj => {
+          obj.material = obj.userData.xrayMat;
+          if (obj.userData.edges) obj.userData.edges.visible = true;
+        });
+
+        const zeroGT = currentTime - 8.033;
+        gravityData.vehicles.forEach(v => {
+          const lift = Math.pow(zeroGT, 1.35) * v.floatPhase.liftSpeed;
+          v.group.position.y = lift;
+          v.group.rotation.x = zeroGT * v.floatPhase.rotSpeed.x;
+          v.group.rotation.y = zeroGT * v.floatPhase.rotSpeed.y;
+          v.group.rotation.z = zeroGT * v.floatPhase.rotSpeed.z;
+          v.group.position.x = v.lane + zeroGT * v.floatPhase.lateralDrift;
+
+          if (v.cargoItems && v.cargoItems.length > 0) {
+            v.cargoItems.forEach(box => {
+              box.mesh.position.y = box.origPos.y + zeroGT * box.driftVel.y * 1.2;
+              box.mesh.position.x = box.origPos.x + zeroGT * box.driftVel.x;
+              box.mesh.rotation.x = zeroGT * box.spinVel.x;
+              box.mesh.rotation.y = zeroGT * box.spinVel.y;
+            });
+          }
+        });
+
+        gravityData.waterSpires.spires.forEach(sp => {
+          const rise = Math.min(sp.maxRise, Math.pow(zeroGT, 1.3) * sp.speed * 2.5);
+          sp.mesh.position.y = sp.baseY + rise;
+          sp.mesh.rotation.y += 0.008;
+        });
+
+        const k1 = smoothstep(8.033, 15.0, currentTime);
+        camera.position.set(
+          lerp(5.2, 2.5, k1) + camDriftX,
+          lerp(3.2, 7.5, k1) + camDriftY,
+          lerp(-25, 5, k1) + shake.z
+        );
+        camera.lookAt(
+          lerp(1.2, -0.5, k1) + shake.x * 1.5,
+          lerp(4.5, 9.2, k1) + shake.y * 1.5,
+          lerp(15, 45, k1)
+        );
+
+        hudLabel.textContent = (CONFIG.timerPhases && CONFIG.timerPhases[1]) ? CONFIG.timerPhases[1].label : "GRAVITY RETURNS IN";
+        const remSlow = Math.max(0, 5.002 - (currentTime - 8.033) / 11.21).toFixed(3);
+        hudTimer.textContent = `0:0${remSlow}`;
+        hudSubtrack.textContent = (CONFIG.subtracks && CONFIG.subtracks[1]) ? CONFIG.subtracks[1].text : "TIME SLOWED DOWN 11×";
+      }
+
+      // 3. PHASE 3: COCKPIT POV & FLOATING STEERING WHEEL, COFFEE & KEYS (15.0s - 25.0s)
+      else if (currentTime >= 15.0 && currentTime < 25.0) {
+        gravityData.gravityWorld.visible = true;
+        spaceWorld.visible = false;
+        gravityData.lidarData.lidarWorld.visible = false;
+        starSystem.visible = true;
+        gravityData.waterSpires.spiresGroup.visible = true;
+        hudTop.style.display = "none";
+
+        scene.background = new THREE.Color(0x000000);
+        scene.fog = null;
+
+        allRegisteredObjects.forEach(obj => {
+          obj.material = obj.userData.xrayMat;
+          if (obj.userData.edges) obj.userData.edges.visible = true;
+        });
+
+        const povFloatY = 8.5 + (currentTime - 15.0) * 0.6;
+        camera.position.set(2.2 + camDriftX * 0.3, povFloatY + camDriftY * 0.3, 12.0 + shake.z);
+        camera.rotation.set(0.04, 0, 0);
+
+        gravityData.cockpit.cockpitGroup.visible = true;
+        gravityData.cockpit.cockpitGroup.position.copy(camera.position);
+        gravityData.cockpit.cockpitGroup.rotation.copy(camera.rotation);
+
+        gravityData.cockpit.stWheelGroup.rotation.z = currentTime * 0.85;
+        gravityData.cockpit.stWheelGroup.rotation.x = Math.sin(currentTime * 0.6) * 0.3;
+        gravityData.cockpit.stWheelGroup.position.y = -0.05 + Math.sin(currentTime * 1.4) * 0.04;
+
+        gravityData.cockpit.cupGroup.rotation.x = currentTime * 1.6;
+        gravityData.cockpit.cupGroup.rotation.y = currentTime * 1.1;
+        gravityData.cockpit.cupGroup.position.y = 0.04 + Math.sin(currentTime * 1.2) * 0.06;
+
+        gravityData.cockpit.phoneGroup.rotation.y = currentTime * 2.2;
+        gravityData.cockpit.phoneGroup.rotation.z = Math.cos(currentTime * 1.5) * 0.4;
+        gravityData.cockpit.phoneGroup.position.y = 0.16 + Math.cos(currentTime * 1.6) * 0.05;
+
+        const hCycle = currentTime * 1.5;
+        gravityData.cockpit.handLGroup.position.y = -0.18 + Math.sin(hCycle) * 0.02;
+        gravityData.cockpit.handRGroup.position.y = -0.15 + Math.cos(hCycle * 0.9) * 0.02;
+
+        hudLabel.textContent = (CONFIG.timerPhases && CONFIG.timerPhases[1]) ? CONFIG.timerPhases[1].label : "GRAVITY RETURNS IN";
+        const remSlow = Math.max(0, 5.002 - (currentTime - 8.033) / 11.21).toFixed(3);
+        hudTimer.textContent = `0:0${remSlow}`;
+        hudSubtrack.textContent = (CONFIG.subtracks && CONFIG.subtracks[1]) ? CONFIG.subtracks[1].text : "TIME SLOWED DOWN 11×";
+      }
+
+      // 4. PHASE 4: HIGHWAY OVERVIEW & TANGENT DRIFT (25.0s - 42.2s)
+      else if (currentTime >= 25.0 && currentTime < 42.2) {
+        gravityData.gravityWorld.visible = true;
+        spaceWorld.visible = false;
+        gravityData.lidarData.lidarWorld.visible = false;
+        starSystem.visible = true;
+        gravityData.cockpit.cockpitGroup.visible = false;
+        gravityData.waterSpires.spiresGroup.visible = true;
+        hudTop.style.display = "none";
+
+        scene.background = new THREE.Color(0x000000);
+        scene.fog = null;
+
+        allRegisteredObjects.forEach(obj => {
+          obj.material = obj.userData.xrayMat;
+          if (obj.userData.edges) obj.userData.edges.visible = true;
+        });
+
+        const zeroGT = currentTime - 8.033;
+        gravityData.vehicles.forEach(v => {
+          const lift = Math.pow(zeroGT, 1.38) * v.floatPhase.liftSpeed;
+          v.group.position.y = lift;
+          v.group.rotation.x = zeroGT * v.floatPhase.rotSpeed.x;
+          v.group.rotation.y = zeroGT * v.floatPhase.rotSpeed.y;
+          v.group.rotation.z = zeroGT * v.floatPhase.rotSpeed.z;
+          v.group.position.x = v.lane + zeroGT * v.floatPhase.lateralDrift * 1.5;
+        });
+
+        gravityData.waterSpires.spires.forEach(sp => {
+          const rise = Math.min(sp.maxRise * 1.5, Math.pow(zeroGT, 1.32) * sp.speed * 2.8);
+          sp.mesh.position.y = sp.baseY + rise;
+          sp.mesh.rotation.y += 0.012;
+        });
+
+        const k2 = smoothstep(25.0, 42.2, currentTime);
+        camera.position.set(
+          lerp(-18, 0, k2) + camDriftX,
+          lerp(18, 62, k2) + camDriftY,
+          lerp(-55, -95, k2) + shake.z
+        );
+        camera.lookAt(
+          lerp(0, 0, k2) + shake.x * 1.5,
+          lerp(15, 35, k2) + shake.y * 1.5,
+          lerp(20, 10, k2)
+        );
+
+        if (currentTime > 39.4) {
+          whiteoutAlpha = smoothstep(39.4, 42.2, currentTime);
+        }
+
+        hudLabel.textContent = (CONFIG.timerPhases && CONFIG.timerPhases[1]) ? CONFIG.timerPhases[1].label : "GRAVITY RETURNS IN";
+        const remSlow = Math.max(0, 5.002 - (currentTime - 8.033) / 11.21).toFixed(3);
+        hudTimer.textContent = `0:0${remSlow}`;
+        hudSubtrack.textContent = (CONFIG.subtracks && CONFIG.subtracks[1]) ? CONFIG.subtracks[1].text : "TIME SLOWED DOWN 11×";
+      }
+
+      // 5. PHASE 5: DYNAMIC ORBITAL SPACE ZOOM & TANGENT MOON BREAKOUT (42.2s - 64.0s)
+      else if (currentTime >= 42.2 && currentTime < 64.0) {
+        gravityData.gravityWorld.visible = false;
+        spaceWorld.visible = true;
+        gravityData.lidarData.lidarWorld.visible = false;
+        starSystem.visible = true;
+        gravityData.cockpit.cockpitGroup.visible = false;
+        hudTop.style.display = "none";
+
+        scene.background = new THREE.Color(0x000000);
+        scene.fog = null;
+        hemiLight.intensity = 0.0;
+        ambientLight.intensity = 0.28;
+        sunLight.intensity = 1.35;
+        sunLight.position.set(-16, -12, 18);
+
+        if (currentTime < 43.0) {
+          whiteoutAlpha = 1.0 - (currentTime - 42.2) / 0.8;
+        }
+
+        earthSphere.rotation.y = currentTime * 0.08;
+        earthSphere.rotation.z = 0.25;
+
+        const spaceT = currentTime - 42.2;
+        if (currentTime < 55.4) {
+          earthSphere.visible = true;
+          moonSphere.visible = true;
+
+          const baseScale = 1.0 + spaceT * 0.06;
+          earthSphere.scale.set(baseScale, baseScale, baseScale);
+
+          // Newton's First Law: The Moon snaps orbit and hurtles away on a straight tangent vector into deep space!
+          const moonDist = 8.5 + spaceT * 1.6;
+          moonSphere.position.set(
+            Math.cos(0.85) * moonDist,
+            Math.sin(0.4) * moonDist * 0.6,
+            Math.sin(0.85) * moonDist - spaceT * 1.8
+          );
+          moonSphere.scale.set(0.65, 0.65, 0.65);
+
+          camera.position.set(lerp(0, -2.5, spaceT / 13.2) + shake.x, lerp(1.8, 3.2, spaceT / 13.2) + shake.y, lerp(22.0, 32.0, spaceT / 13.2));
+          camera.lookAt(0, 0, 0);
+
+          earthAtmoMode = 'cloud_expand';
+          earthScreenRadius = Math.min(VIEW_H * 0.72, (VIEW_H * 0.38) * (1.0 + spaceT * 0.08));
+
+          const milesVal = Math.round(7918 + (currentTime - 41.88) * 18450);
+          const milesFormatted = milesVal.toLocaleString('en-US');
+          hudSubtrack.textContent = (CONFIG.subtracks && CONFIG.subtracks[2] && CONFIG.subtracks[2].template) ?
+            CONFIG.subtracks[2].template.replace("{value}", milesFormatted) : `ATMOSPHERE EXPANDS TO ${milesFormatted} MILES WIDE`;
+        } else {
+          earthSphere.visible = false;
+          moonSphere.visible = false;
+          camera.position.set(shake.x, shake.y, 16.5);
+          camera.lookAt(0, 0, 0);
+          earthAtmoMode = 'horizon';
+          hudSubtrack.textContent = (CONFIG.subtracks && CONFIG.subtracks[3]) ? CONFIG.subtracks[3].text : "THE MOON FLIES TANGENT INTO DEEP SPACE";
+        }
+
+        hudLabel.textContent = (CONFIG.timerPhases && CONFIG.timerPhases[1]) ? CONFIG.timerPhases[1].label : "GRAVITY RETURNS IN";
+        const remSpace = Math.max(0, 5.002 - (currentTime - 8.033) / 11.21).toFixed(3);
+        hudTimer.textContent = `0:0${remSpace}`;
+      }
+
+      // 6. PHASE 6: 120,000 LIDAR BRIDGE POINT CLOUD FREEFALL & IMPACT SLAM (64.0s - 72.5s)
+      else if (currentTime >= 64.0 && currentTime < 72.5) {
+        gravityData.gravityWorld.visible = false;
+        spaceWorld.visible = false;
+        gravityData.lidarData.lidarWorld.visible = true;
+        starSystem.visible = true;
+        gravityData.cockpit.cockpitGroup.visible = false;
+        hudTop.style.display = "none";
+
+        scene.background = new THREE.Color(0x000000);
+        scene.fog = null;
+
+        const lData = gravityData.lidarData;
+        const posArr = lData.lidarGeo.attributes.position.array;
+        const returnT = currentTime - 64.0;
+        const blastDt = Math.max(0, currentTime - 69.3);
+
+        const fallDistance = Math.min(32, 0.5 * 9.8 * Math.pow(Math.min(5.3, returnT), 2) * 0.18);
+        const blastFactor = blastDt > 0 ? Math.pow(blastDt, 1.55) * 2.2 : 0;
+
+        for (let i = 0; i < lData.lidarCount; i++) {
+          const i3 = i * 3;
+          const origY = lData.originalElevations[i];
+          let curY = lData.basePositions[i3 + 1];
+
+          if (origY > 1.5) {
+            curY = Math.max(0.2, origY - fallDistance);
+          }
+
+          posArr[i3]     = lData.basePositions[i3]     + blastFactor * lData.velocitiesX[i];
+          posArr[i3 + 1] = curY                        + blastFactor * lData.velocitiesY[i];
+          posArr[i3 + 2] = lData.basePositions[i3 + 2] + blastFactor * lData.velocitiesZ[i];
+        }
+        lData.lidarGeo.attributes.position.needsUpdate = true;
+
+        const driftK = smoothstep(64.0, 69.3, currentTime);
+        camera.position.set(
+          lerp(6.5, 0.0, driftK) + shake.x * 2.0,
+          lerp(8.5, 3.2, driftK) + shake.y * 2.0,
+          lerp(-45, -15, driftK) + shake.z
+        );
+        camera.lookAt(
+          0 + shake.x * 3.0,
+          lerp(12, 1.5, driftK) + shake.y * 3.0,
+          lerp(20, 60, driftK)
+        );
+
+        hudLabel.textContent = (CONFIG.timerPhases && CONFIG.timerPhases[2]) ? CONFIG.timerPhases[2].label : "GRAVITY";
+        hudTimer.textContent = (CONFIG.timerPhases && CONFIG.timerPhases[2] && CONFIG.timerPhases[2].staticText) ? CONFIG.timerPhases[2].staticText : "BACK";
+        hudTimer.classList.add('serif-back');
+
+        if (currentTime < 66.5) {
+          hudSubtrack.textContent = (CONFIG.subtracks && CONFIG.subtracks[4]) ? CONFIG.subtracks[4].text : "FREEFALL BEGINS";
+        } else if (currentTime < 69.3) {
+          hudSubtrack.textContent = (CONFIG.subtracks && CONFIG.subtracks[5]) ? CONFIG.subtracks[5].text : "CENTRAL PARK, 5 SECONDS LATER";
+        } else {
+          hudSubtrack.textContent = (CONFIG.subtracks && CONFIG.subtracks[6]) ? CONFIG.subtracks[6].text : "EVERYTHING SLAMS BACK DOWN AT ONCE";
+        }
+
+        if (currentTime >= 71.7) {
+          hudMiddle.style.opacity = String(Math.max(0, 1 - (currentTime - 71.7) / 0.6));
+        }
+      }
+
+      // 7. PHASE 7: OUTRO BLACK SCREEN (72.5s - 80.0s)
+      else {
+        gravityData.gravityWorld.visible = false;
+        spaceWorld.visible = false;
+        gravityData.lidarData.lidarWorld.visible = false;
+        starSystem.visible = false;
+        gravityData.cockpit.cockpitGroup.visible = false;
+        hudMiddle.style.opacity = "0";
+        hudTop.style.display = "none";
+        outroLayer.style.opacity = String(smoothstep(73.4, 74.2, currentTime));
+      }
+
+      WorldFXOverlay.renderOverlays(fxCtx, VIEW_W, VIEW_H, {
+        t: currentTime,
+        showAtom: false,
+        sunScreenPos,
+        handsGlowProg,
+        peopleGlowProg,
+        eruptionProg,
+        whiteoutAlpha,
+        earthAtmoMode,
+        earthScreenRadius,
+        earthMapCanvas: earthCloudTex.image
+      });
+
+      postFX.render(scene, camera, fxCanvas, currentTime, computeLook(currentTime));
+    }
+
+    // =========================================================================
     // MASTER DETERMINISTIC FRAME UPDATE (t in 0.0s .. 80.0s)
     // =========================================================================
     function updateTimeline(t) {
@@ -1207,6 +1617,11 @@
       const shake = getCameraShake(currentTime);
       const camDriftX = Math.sin(currentTime * 1.15) * 0.022 + Math.cos(currentTime * 2.1) * 0.008 + shake.x;
       const camDriftY = Math.cos(currentTime * 1.45) * 0.016 + Math.sin(currentTime * 2.4) * 0.006 + shake.y;
+
+      if (isGravityStory && gravityData) {
+        updateGravityTimeline(currentTime, shake, camDriftX, camDriftY);
+        return;
+      }
 
       // -----------------------------------------------------------------------
       // PHASE 1: CENTRAL PARK LOW-POLY CINEMATIC SUNSET (0.0s - 8.033s: frame_001..004)
