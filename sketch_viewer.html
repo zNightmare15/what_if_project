@@ -484,6 +484,8 @@
     const bTexRedBrick = WorldTextures.createBuildingTexture('#4e2721', '#d4a373', false, sRand);
     const bTexXray = WorldTextures.createBuildingTexture('#050811', '#ffffff', true, sRand);
     const earthCloudTex = WorldTextures.createSwirlingEarthTexture(sRand);
+    const cinematicEarthTex = WorldTextures.createCinematicEarthTexture(sRand);
+    const cosmicNebulaTex = WorldTextures.createCosmicNebulaTexture(sRand);
     const moonCraterTex = WorldTextures.createCrateredMoonTexture(sRand);
     const dotSpriteTex = WorldTextures.createParticleGlowTexture(false);
     const sparkSpriteTex = WorldTextures.createParticleGlowTexture(true);
@@ -889,7 +891,7 @@
         scene,
         registerStylizedMesh,
         mats,
-        { grassDayTex, groundXrayTex },
+        { grassDayTex, groundXrayTex, cinematicEarthTex, cosmicNebulaTex, moonTex: moonCraterTex },
         sRand,
         dotSpriteTex
       );
@@ -1190,6 +1192,9 @@
       parkWorld.visible = false;
       lidarData.lidarWorld.visible = false;
       povHandsGroup.visible = false;
+      if (gravityData && gravityData.spaceGravity) {
+        gravityData.spaceGravity.spaceGroup.visible = false;
+      }
 
       let sunScreenPos = null;
       let handsGlowProg = 0;
@@ -1230,6 +1235,12 @@
           v.group.position.z = v.initZ + currentTime * v.baseSpeed;
           if (v.group.position.z > 120) v.group.position.z -= 240;
         });
+
+        // Sailboat gently bobbing in bay
+        if (gravityData.bridgeDecor && gravityData.bridgeDecor.boatGroup) {
+          gravityData.bridgeDecor.boatGroup.position.set(38, -14 + Math.sin(currentTime * 1.2) * 0.15, -25);
+          gravityData.bridgeDecor.boatGroup.rotation.set(0, 0, Math.sin(currentTime * 0.8) * 0.04);
+        }
 
         const sweepK = smoothstep(0.0, 8.033, currentTime);
         camera.position.set(
@@ -1281,15 +1292,30 @@
           v.group.rotation.z = zeroGT * v.floatPhase.rotSpeed.z;
           v.group.position.x = v.lane + zeroGT * v.floatPhase.lateralDrift;
 
-          if (v.cargoItems && v.cargoItems.length > 0) {
-            v.cargoItems.forEach(box => {
-              box.mesh.position.y = box.origPos.y + zeroGT * box.driftVel.y * 1.2;
-              box.mesh.position.x = box.origPos.x + zeroGT * box.driftVel.x;
-              box.mesh.rotation.x = zeroGT * box.spinVel.x;
-              box.mesh.rotation.y = zeroGT * box.spinVel.y;
+          if (v.looseCargo && v.looseCargo.length > 0) {
+            v.looseCargo.forEach(c => {
+              c.mesh.position.y = c.origPos.y + zeroGT * c.driftVel.y;
+              c.mesh.position.x = c.origPos.x + zeroGT * c.driftVel.x;
+              c.mesh.position.z = c.origPos.z + zeroGT * c.driftVel.z;
+              c.mesh.rotation.x = zeroGT * c.spinVel.x;
+              c.mesh.rotation.y = zeroGT * c.spinVel.y;
+              c.mesh.rotation.z = zeroGT * c.spinVel.z;
             });
           }
         });
+
+        // Sailboat lifts from ocean bay & gantry tilts askew
+        if (gravityData.bridgeDecor && gravityData.bridgeDecor.boatGroup) {
+          const boatLift = Math.pow(zeroGT, 1.35) * 0.35;
+          gravityData.bridgeDecor.boatGroup.position.set(38 + zeroGT * 0.15, -14 + boatLift, -25);
+          gravityData.bridgeDecor.boatGroup.rotation.x = zeroGT * 0.02;
+          gravityData.bridgeDecor.boatGroup.rotation.z = zeroGT * 0.03;
+        }
+        if (gravityData.bridgeDecor && gravityData.bridgeDecor.gantryGroup) {
+          const gTilt = smoothstep(8.033, 13.0, currentTime) * 0.22;
+          gravityData.bridgeDecor.gantryGroup.rotation.z = gTilt;
+          gravityData.bridgeDecor.gantryGroup.position.y = gTilt * 2.5;
+        }
 
         gravityData.waterSpires.spires.forEach(sp => {
           const rise = Math.min(sp.maxRise, Math.pow(zeroGT, 1.3) * sp.speed * 2.5);
@@ -1340,6 +1366,11 @@
         gravityData.cockpit.cockpitGroup.position.copy(camera.position);
         gravityData.cockpit.cockpitGroup.rotation.copy(camera.rotation);
 
+        if (gravityData.cockpit.diceGroup) {
+          gravityData.cockpit.diceGroup.rotation.z = Math.sin(currentTime * 2.2) * 0.35;
+          gravityData.cockpit.diceGroup.rotation.x = Math.cos(currentTime * 1.8) * 0.25;
+        }
+
         gravityData.cockpit.stWheelGroup.rotation.z = currentTime * 0.85;
         gravityData.cockpit.stWheelGroup.rotation.x = Math.sin(currentTime * 0.6) * 0.3;
         gravityData.cockpit.stWheelGroup.position.y = -0.05 + Math.sin(currentTime * 1.4) * 0.04;
@@ -1388,7 +1419,31 @@
           v.group.rotation.y = zeroGT * v.floatPhase.rotSpeed.y;
           v.group.rotation.z = zeroGT * v.floatPhase.rotSpeed.z;
           v.group.position.x = v.lane + zeroGT * v.floatPhase.lateralDrift * 1.5;
+
+          if (v.looseCargo && v.looseCargo.length > 0) {
+            v.looseCargo.forEach(c => {
+              c.mesh.position.y = c.origPos.y + zeroGT * c.driftVel.y * 1.25;
+              c.mesh.position.x = c.origPos.x + zeroGT * c.driftVel.x * 1.25;
+              c.mesh.position.z = c.origPos.z + zeroGT * c.driftVel.z * 1.25;
+              c.mesh.rotation.x = zeroGT * c.spinVel.x;
+              c.mesh.rotation.y = zeroGT * c.spinVel.y;
+              c.mesh.rotation.z = zeroGT * c.spinVel.z;
+            });
+          }
         });
+
+        // Sailboat continues floating in air & gantry tilted
+        if (gravityData.bridgeDecor && gravityData.bridgeDecor.boatGroup) {
+          const boatLift = Math.pow(zeroGT, 1.35) * 0.35;
+          gravityData.bridgeDecor.boatGroup.position.set(38 + zeroGT * 0.22, -14 + boatLift, -25);
+          gravityData.bridgeDecor.boatGroup.rotation.x = zeroGT * 0.03;
+          gravityData.bridgeDecor.boatGroup.rotation.z = zeroGT * 0.04;
+        }
+        if (gravityData.bridgeDecor && gravityData.bridgeDecor.gantryGroup) {
+          const gTilt = 0.22 + (currentTime - 13.0) * 0.005;
+          gravityData.bridgeDecor.gantryGroup.rotation.z = gTilt;
+          gravityData.bridgeDecor.gantryGroup.position.y = gTilt * 2.5;
+        }
 
         gravityData.waterSpires.spires.forEach(sp => {
           const rise = Math.min(sp.maxRise * 1.5, Math.pow(zeroGT, 1.32) * sp.speed * 2.8);
@@ -1418,63 +1473,121 @@
         hudSubtrack.textContent = (CONFIG.subtracks && CONFIG.subtracks[1]) ? CONFIG.subtracks[1].text : "TIME SLOWED DOWN 11×";
       }
 
-      // 5. PHASE 5: DYNAMIC ORBITAL SPACE ZOOM & TANGENT MOON BREAKOUT (42.2s - 64.0s)
+      // 5. PHASE 5: BESPOKE PLANETARY SPACE ZOOM, ISS & NEWTON TANGENT BREAKOUT (42.2s - 64.0s)
       else if (currentTime >= 42.2 && currentTime < 64.0) {
         gravityData.gravityWorld.visible = false;
-        spaceWorld.visible = true;
+        spaceWorld.visible = false;
+        if (gravityData.spaceGravity) {
+          gravityData.spaceGravity.spaceGroup.visible = true;
+        }
         gravityData.lidarData.lidarWorld.visible = false;
-        starSystem.visible = true;
+        starSystem.visible = false; // Using celestial nebula sphere
         gravityData.cockpit.cockpitGroup.visible = false;
         hudTop.style.display = "none";
+        earthAtmoMode = null; // Clean 3D render without 2D overlay occlusion
 
-        scene.background = new THREE.Color(0x000000);
+        scene.background = new THREE.Color(0x000206);
         scene.fog = null;
-        hemiLight.intensity = 0.0;
-        ambientLight.intensity = 0.28;
-        sunLight.intensity = 1.35;
-        sunLight.position.set(-16, -12, 18);
+        starSystem.visible = true;
+        ambientLight.intensity = 0.45;
+        hemiLight.intensity = 0.22;
+        sunLight.intensity = 2.8;
+        sunLight.position.set(-28, 14, 22);
 
         if (currentTime < 43.0) {
           whiteoutAlpha = 1.0 - (currentTime - 42.2) / 0.8;
         }
 
-        earthSphere.rotation.y = currentTime * 0.08;
-        earthSphere.rotation.z = 0.25;
-
         const spaceT = currentTime - 42.2;
-        if (currentTime < 55.4) {
-          earthSphere.visible = true;
-          moonSphere.visible = true;
+        const spG = gravityData.spaceGravity;
+        if (spG) {
+          // Earth axial rotation (stylized continents & night city lights)
+          spG.earthMesh.rotation.y = spaceT * 0.12;
 
-          const baseScale = 1.0 + spaceT * 0.06;
-          earthSphere.scale.set(baseScale, baseScale, baseScale);
+          // Expanding atmospheric halo shell
+          const haloScale = 1.0 + Math.min(1.4, spaceT * 0.045);
+          spG.atmoShell.scale.set(9.5 * haloScale, 9.5 * haloScale, 1);
 
-          // Newton's First Law: The Moon snaps orbit and hurtles away on a straight tangent vector into deep space!
-          const moonDist = 8.5 + spaceT * 1.6;
-          moonSphere.position.set(
-            Math.cos(0.85) * moonDist,
-            Math.sin(0.4) * moonDist * 0.6,
-            Math.sin(0.85) * moonDist - spaceT * 1.8
-          );
-          moonSphere.scale.set(0.65, 0.65, 0.65);
+          // Escaping plume particles
+          if (spG.plumeGeo && spG.plumeInitPos && spG.plumeVels) {
+            const posArr = spG.plumeGeo.attributes.position.array;
+            const count = posArr.length;
+            for (let i = 0; i < count; i++) {
+              posArr[i] = spG.plumeInitPos[i] + spG.plumeVels[i] * spaceT * 0.35;
+            }
+            spG.plumeGeo.attributes.position.needsUpdate = true;
+          }
 
-          camera.position.set(lerp(0, -2.5, spaceT / 13.2) + shake.x, lerp(1.8, 3.2, spaceT / 13.2) + shake.y, lerp(22.0, 32.0, spaceT / 13.2));
-          camera.lookAt(0, 0, 0);
+          // Tumbling ISS drifting away from low Earth orbit
+          spG.issGroup.position.set(4.2 + spaceT * 0.38, 1.8 + spaceT * 0.18, 1.2 - spaceT * 0.28);
+          spG.issGroup.rotation.x = spaceT * 0.45;
+          spG.issGroup.rotation.y = spaceT * 0.70;
+          spG.issGroup.rotation.z = spaceT * 0.25;
 
-          earthAtmoMode = 'cloud_expand';
-          earthScreenRadius = Math.min(VIEW_H * 0.72, (VIEW_H * 0.38) * (1.0 + spaceT * 0.08));
+          // Moon tangential breakaway along Newton trajectory
+          const snapT = Math.max(0, spaceT - 1.2);
+          const startX = 4.8;
+          const startY = 2.2;
+          const startZ = 3.6;
 
-          const milesVal = Math.round(7918 + (currentTime - 41.88) * 18450);
-          const milesFormatted = milesVal.toLocaleString('en-US');
-          hudSubtrack.textContent = (CONFIG.subtracks && CONFIG.subtracks[2] && CONFIG.subtracks[2].template) ?
-            CONFIG.subtracks[2].template.replace("{value}", milesFormatted) : `ATMOSPHERE EXPANDS TO ${milesFormatted} MILES WIDE`;
-        } else {
-          earthSphere.visible = false;
-          moonSphere.visible = false;
-          camera.position.set(shake.x, shake.y, 16.5);
-          camera.lookAt(0, 0, 0);
-          earthAtmoMode = 'horizon';
-          hudSubtrack.textContent = (CONFIG.subtracks && CONFIG.subtracks[3]) ? CONFIG.subtracks[3].text : "THE MOON FLIES TANGENT INTO DEEP SPACE";
+          // Tangent direction shooting cleanly into deep space
+          const tangentDirX = 0.55;
+          const tangentDirY = 0.35;
+          const tangentDirZ = -2.10;
+
+          const moonCurrX = startX + snapT * tangentDirX * 1.5;
+          const moonCurrY = startY + snapT * tangentDirY * 1.5;
+          const moonCurrZ = startZ + snapT * tangentDirZ * 1.5;
+
+          spG.moonMesh.position.set(moonCurrX, moonCurrY, moonCurrZ);
+          spG.moonMesh.rotation.y = spaceT * 0.05;
+
+          // Dynamic update of golden tangent laser vector
+          if (spaceT > 1.2) {
+            spG.tangentLine.visible = true;
+            const tPos = spG.tangentLine.geometry.attributes.position.array;
+            tPos[0] = startX; tPos[1] = startY; tPos[2] = startZ;
+            tPos[3] = moonCurrX; tPos[4] = moonCurrY; tPos[5] = moonCurrZ;
+            spG.tangentLine.geometry.attributes.position.needsUpdate = true;
+            if (spG.orbitLine.material) {
+              spG.orbitLine.material.opacity = Math.max(0, 0.85 - snapT * 0.25);
+            }
+          } else {
+            spG.tangentLine.visible = false;
+            if (spG.orbitLine.material) spG.orbitLine.material.opacity = 0.85;
+          }
+
+          // Camera composition
+          if (currentTime < 55.4) {
+            // Orbital wide shot: Earth, escaping plumes, ISS, snapping Moon
+            const camProgress = spaceT / 13.2;
+            camera.position.set(
+              lerp(0.8, -2.5, camProgress) + shake.x,
+              lerp(1.0, 3.5, camProgress) + shake.y,
+              lerp(20.0, 30.0, camProgress) + shake.z
+            );
+            camera.lookAt(
+              lerp(1.2, 2.8, camProgress),
+              lerp(0.6, 1.2, camProgress),
+              lerp(0.0, -4.0, camProgress)
+            );
+
+            const milesVal = Math.round(7918 + (currentTime - 41.88) * 18450);
+            const milesFormatted = milesVal.toLocaleString('en-US');
+            hudSubtrack.textContent = (CONFIG.subtracks && CONFIG.subtracks[2] && CONFIG.subtracks[2].template) ?
+              CONFIG.subtracks[2].template.replace("{value}", milesFormatted) : `ATMOSPHERE EXPANDS TO ${milesFormatted} MILES WIDE`;
+          } else {
+            // Close tracking shot on Moon speeding away into the abyss with Earth in distant background
+            const trackProgress = (currentTime - 55.4) / (64.0 - 55.4);
+            camera.position.set(
+              moonCurrX - 3.2 + shake.x,
+              moonCurrY + 1.4 + shake.y,
+              moonCurrZ + 7.5 + shake.z
+            );
+            camera.lookAt(moonCurrX, moonCurrY, moonCurrZ);
+
+            hudSubtrack.textContent = (CONFIG.subtracks && CONFIG.subtracks[3]) ? CONFIG.subtracks[3].text : "THE MOON FLIES TANGENT INTO DEEP SPACE";
+          }
         }
 
         hudLabel.textContent = (CONFIG.timerPhases && CONFIG.timerPhases[1]) ? CONFIG.timerPhases[1].label : "GRAVITY RETURNS IN";
@@ -1634,6 +1747,9 @@
         groundParticles.visible = false;
         sandBombs.visible = false;
         povHandsGroup.visible = false;
+      if (gravityData && gravityData.spaceGravity) {
+        gravityData.spaceGravity.spaceGroup.visible = false;
+      }
 
         scene.background = skyDayTexture;
         scene.fog = dayFog;
@@ -1730,6 +1846,9 @@
         if (currentTime < 14.5) {
           // 8.033s - 14.5s: X-Ray park (frame_005), tilt up toward open sky over midrise buildings for Sun flare (frame_006), pan to leaping dog (frame_007)
           povHandsGroup.visible = false;
+      if (gravityData && gravityData.spaceGravity) {
+        gravityData.spaceGravity.spaceGroup.visible = false;
+      }
 
           if (currentTime < 9.5) {
             camera.position.set(0.15 + camDriftX, 1.62 + camDriftY, 8.4 + shake.z);
@@ -1758,6 +1877,9 @@
         } else if (currentTime < 27.8) {
           // 19.8s - 27.8s (frame_012 & frame_013): Look up at Woman in Skirt + Frisbee Jumper (frame_012), then pan back to Picnic Blanket (frame_013)
           povHandsGroup.visible = false;
+      if (gravityData && gravityData.spaceGravity) {
+        gravityData.spaceGravity.spaceGroup.visible = false;
+      }
           const panRight = smoothstep(23.2, 25.2, currentTime);
           camera.position.set(lerp(-2.2, 0.15, panRight) + camDriftX, 1.58 + camDriftY, lerp(6.8, 8.4, panRight));
           camera.lookAt(lerp(-2.5, 0.10, panRight), 2.05, -10.0);
@@ -1771,6 +1893,9 @@
         } else {
           // 34.8s - 42.2s (frame_019 & frame_021): Look up at glowing nuclear humans + Sun flare in open sky above midrise buildings (frame_019), then cloud eruption (frame_021)!
           povHandsGroup.visible = false;
+      if (gravityData && gravityData.spaceGravity) {
+        gravityData.spaceGravity.spaceGroup.visible = false;
+      }
           const panSky = smoothstep(38.8, 40.8, currentTime);
           camera.position.set(lerp(-3.4, 0.15, panSky) + camDriftX, 1.55 + camDriftY, lerp(4.2, 8.2, panSky) + shake.z);
           camera.lookAt(lerp(-6.8, 0.10, panSky) + shake.x * 2.0, lerp(2.85, 3.2, panSky) + shake.y * 2.0, -10.0);
@@ -1805,6 +1930,9 @@
         lidarData.lidarWorld.visible = false;
         starSystem.visible = true;
         povHandsGroup.visible = false;
+      if (gravityData && gravityData.spaceGravity) {
+        gravityData.spaceGravity.spaceGroup.visible = false;
+      }
         hudTop.style.display = "none";
 
         scene.background = new THREE.Color(0x000000);
@@ -1905,6 +2033,9 @@
         lidarData.lidarWorld.visible = true;
         starSystem.visible = true;
         povHandsGroup.visible = false;
+      if (gravityData && gravityData.spaceGravity) {
+        gravityData.spaceGravity.spaceGroup.visible = false;
+      }
         hudTop.style.display = "none";
 
         scene.background = new THREE.Color(0x000000);
