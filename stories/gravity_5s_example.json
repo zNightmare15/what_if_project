@@ -106,7 +106,7 @@
       "start": 0.0,
       "end": 8.033,
       "triggers": {
-        "showAtom": true,
+        "showAtom": false,
         "atomStart": 4.2,
         "atomEnd": 8.033,
         "xrayMode": false,

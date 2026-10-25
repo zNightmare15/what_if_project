@@ -68,17 +68,20 @@ async function exportVideo() {
   const htmlPath = 'file:///' + path.resolve(__dirname, HTML_FILE).replace(/\\/g, '/') + '?export=1';
   await page.goto(htmlPath, { waitUntil: 'load' });
 
-  console.log("1. Rendering 14 keyframe verification screenshots...");
-  for (const item of VERIFY_TIMESTAMPS) {
-    await page.evaluate((sec) => window.renderAtTime(sec), item.t);
-    const outPath = path.join(VERIFY_DIR, item.name);
-    await page.screenshot({ path: outPath, type: 'png' });
-    console.log(`   Saved verification keyframe: ${item.name} (t=${item.t}s)`);
+  if (!process.argv.includes('--skip-verify')) {
+    console.log("1. Rendering 14 keyframe verification screenshots...");
+    for (const item of VERIFY_TIMESTAMPS) {
+      await page.evaluate((sec) => window.renderAtTime(sec), item.t);
+      const outPath = path.join(VERIFY_DIR, item.name);
+      await page.screenshot({ path: outPath, type: 'png' });
+      console.log(`   Saved verification keyframe: ${item.name} (t=${item.t}s)`);
+    }
   }
 
   if (process.argv.includes('--verify-only')) {
-    await browser.close();
     console.log("Verification frames complete.");
+    try { await browser.close(); } catch(e) {}
+    try { if (browser.process()) browser.process().kill(); } catch(e) {}
     process.exit(0);
   }
 
@@ -148,7 +151,8 @@ async function exportVideo() {
     });
   });
 
-  await browser.close();
+  try { await browser.close(); } catch(e) {}
+  try { if (browser.process()) browser.process().kill(); } catch(e) {}
 
   // Also copy to what_if_electrons_blender_tiktok.mp4 so both output paths have the latest V4 master
   if (OUTPUT_VIDEO_2) fs.copyFileSync(OUTPUT_VIDEO, OUTPUT_VIDEO_2);

@@ -18,6 +18,7 @@ desktop.ini
 temp_speech/
 v4_verify/
 v5_verify/
+v_*_verify/
 ref_analysis/
 
 # Archivos de audio grandes o generados automáticamente

@@ -393,7 +393,7 @@
     </div>
   </div>
 
-  <audio id="audio-track" src="final_audio_mix.mp3" preload="auto"></audio>
+  <audio id="audio-track" src="assets/audio/gravity_audio_mix.mp3" preload="auto"></audio>
 
   <script src="three.min.js"></script>
   <script src="story_config.js"></script>
@@ -884,6 +884,13 @@
     const hudSubtrack = document.getElementById('hud-subtrack');
     const hudSubtitle = document.getElementById('hud-subtitle');
     const outroLayer = document.getElementById('outro-layer');
+    const mainTitleEl = document.getElementById('main-title');
+    const outroTitleEl = document.getElementById('outro-title');
+    const outroSubEl = document.getElementById('outro-sub');
+    if (CONFIG.titleHTML && mainTitleEl) mainTitleEl.innerHTML = CONFIG.titleHTML;
+    if (CONFIG.outroTitleHTML && outroTitleEl) outroTitleEl.innerHTML = CONFIG.outroTitleHTML;
+    if (CONFIG.outroSubHTML && outroSubEl) outroSubEl.innerHTML = CONFIG.outroSubHTML;
+    if (CONFIG.timerPhases && CONFIG.timerPhases[0] && hudLabel) hudLabel.textContent = CONFIG.timerPhases[0].label;
     const timeDisplay = document.getElementById('time-display');
     const timeSlider = document.getElementById('time-slider');
     const audioTrack = document.getElementById('audio-track');
@@ -1243,10 +1250,10 @@
         );
 
         hudTop.style.display = (currentTime < 4.1) ? "flex" : "none";
-        hudLabel.textContent = "ELECTRONS DISAPPEAR IN";
+        hudLabel.textContent = (CONFIG.timerPhases && CONFIG.timerPhases[0]) ? CONFIG.timerPhases[0].label : "DISAPPEARS IN";
         const rem = Math.max(0, 8.033 - currentTime).toFixed(3);
         hudTimer.textContent = `0:0${rem}`;
-        hudSubtrack.textContent = "EVERY ATOM ON EARTH HAS THEM";
+        hudSubtrack.textContent = (CONFIG.subtracks && CONFIG.subtracks[0]) ? CONFIG.subtracks[0].text : "";
       }
 
       // -----------------------------------------------------------------------
@@ -1368,10 +1375,10 @@
         dogGroup.position.set(-2.65, 0.62 + Math.sin(currentTime * 0.8) * 0.012, -4.5);
         dogGroup.rotation.x = -0.18;
 
-        hudLabel.textContent = "ELECTRONS RETURN IN";
+        hudLabel.textContent = (CONFIG.timerPhases && CONFIG.timerPhases[1]) ? CONFIG.timerPhases[1].label : "GRAVITY RETURNS IN";
         const remSlow = Math.max(0, 5.002 - (currentTime - 8.033) / 11.21).toFixed(3);
         hudTimer.textContent = `0:0${remSlow}`;
-        hudSubtrack.textContent = "TIME SLOWED DOWN 11×";
+        hudSubtrack.textContent = (CONFIG.subtracks && CONFIG.subtracks[1]) ? CONFIG.subtracks[1].text : "TIME SLOWED DOWN 11×";
       }
 
       // -----------------------------------------------------------------------
@@ -1416,7 +1423,7 @@
           camera.position.set(shake.x, shake.y, lerp(11.2, 19.8, zoomOutCurve));
           camera.lookAt(0, 0, 0);
 
-          hudSubtrack.textContent = `EARTH IS NOW ${milesFormatted} MILES WIDE`;
+          hudSubtrack.textContent = (CONFIG.subtracks && CONFIG.subtracks[2] && CONFIG.subtracks[2].template) ? CONFIG.subtracks[2].template.replace("{value}", milesFormatted) : `EARTH IS NOW ${milesFormatted} MILES WIDE`;
         } else if (currentTime < 52.2) {
           // Shot 6B (49.2s - 52.2s: frame_026): Swirling Earth fills the entire screen; small dark Moon silhouette in center!
           const zoomB = (currentTime - 49.2) / 3.0;
@@ -1434,7 +1441,7 @@
           camera.position.set(shake.x, shake.y, lerp(17.2, 18.2, zoomB));
           camera.lookAt(0, 0, 0);
 
-          hudSubtrack.textContent = `EARTH IS NOW ${milesFormatted} MILES WIDE`;
+          hudSubtrack.textContent = (CONFIG.subtracks && CONFIG.subtracks[2] && CONFIG.subtracks[2].template) ? CONFIG.subtracks[2].template.replace("{value}", milesFormatted) : `EARTH IS NOW ${milesFormatted} MILES WIDE`;
         } else if (currentTime < 55.4) {
           // Shot 6C (52.2s - 55.4s: frame_027 & frame_028): Cratered Moon in starry sky above rising curved Earth limb that engulfs it!
           earthSphere.visible = false;
@@ -1457,7 +1464,7 @@
           camera.lookAt(shake.x * 1.5, shake.y * 1.5, 0);
 
           earthAtmoMode = 'moon_horizon';
-          hudSubtrack.textContent = `EARTH IS NOW ${milesFormatted} MILES WIDE`;
+          hudSubtrack.textContent = (CONFIG.subtracks && CONFIG.subtracks[2] && CONFIG.subtracks[2].template) ? CONFIG.subtracks[2].template.replace("{value}", milesFormatted) : `EARTH IS NOW ${milesFormatted} MILES WIDE`;
         } else {
           // Shot 6D (55.4s - 64.0s: frame_029..032): "THE MOON IS GONE" — Skimming high above swirling Earth horizon
           earthSphere.visible = false;
@@ -1466,10 +1473,10 @@
           camera.lookAt(0, 0, 0);
 
           earthAtmoMode = 'horizon';
-          hudSubtrack.textContent = "THE MOON IS GONE";
+          hudSubtrack.textContent = (CONFIG.subtracks && CONFIG.subtracks[3]) ? CONFIG.subtracks[3].text : "THE MOON IS GONE";
         }
 
-        hudLabel.textContent = "ELECTRONS RETURN IN";
+        hudLabel.textContent = (CONFIG.timerPhases && CONFIG.timerPhases[1]) ? CONFIG.timerPhases[1].label : "GRAVITY RETURNS IN";
         const remSpace = Math.max(0, 5.002 - (currentTime - 8.033) / 11.21).toFixed(3);
         hudTimer.textContent = `0:0${remSpace}`;
       }
@@ -1515,16 +1522,16 @@
           -16.0
         );
 
-        hudLabel.textContent = "ELECTRONS";
-        hudTimer.textContent = "BACK";
+        hudLabel.textContent = (CONFIG.timerPhases && CONFIG.timerPhases[2]) ? CONFIG.timerPhases[2].label : "GRAVITY";
+        hudTimer.textContent = (CONFIG.timerPhases && CONFIG.timerPhases[2] && CONFIG.timerPhases[2].staticText) ? CONFIG.timerPhases[2].staticText : "BACK";
         hudTimer.classList.add('serif-back');
 
         if (currentTime < 66.5) {
-          hudSubtrack.textContent = "EARTH ISN'T";
+          hudSubtrack.textContent = (CONFIG.subtracks && CONFIG.subtracks[4]) ? CONFIG.subtracks[4].text : "";
         } else if (currentTime < 69.3) {
-          hudSubtrack.textContent = "CENTRAL PARK, 5 SECONDS LATER";
+          hudSubtrack.textContent = (CONFIG.subtracks && CONFIG.subtracks[5]) ? CONFIG.subtracks[5].text : "CENTRAL PARK, 5 SECONDS LATER";
         } else {
-          hudSubtrack.textContent = "SAME ENERGY AS THE FIRST BLAST";
+          hudSubtrack.textContent = (CONFIG.subtracks && CONFIG.subtracks[6]) ? CONFIG.subtracks[6].text : "";
         }
 
         if (currentTime >= 71.7) {
@@ -1545,8 +1552,12 @@
         outroLayer.style.opacity = String(smoothstep(73.4, 74.2, currentTime));
       }
 
+      const phase0Triggers = (CONFIG.visualPhases && CONFIG.visualPhases[0] && CONFIG.visualPhases[0].triggers) || {};
+      const shouldShowAtom = phase0Triggers.showAtom === true;
+
       WorldFXOverlay.renderOverlays(fxCtx, VIEW_W, VIEW_H, {
         t: currentTime,
+        showAtom: shouldShowAtom,
         sunScreenPos,
         handsGlowProg,
         peopleGlowProg,

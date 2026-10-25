@@ -1,67 +1,67 @@
 // Modular Story Configuration for "What If" 3D Simulation Pipeline
-// Auto-compiled by build_story.js from: stories/sun_vanishes.json
+// Auto-compiled by build_story.js from: stories/gravity_5s_example.json
 // Can be swapped or generated via `node build_story.js stories/<name>.json`
 
 window.STORY_CONFIG = {
-  "id": "sun_vanishes",
-  "totalDuration": 45,
-  "showText": false,
-  "titleHTML": "What if <span class=\"hl\">the Sun</span> vanished?",
-  "outroTitleHTML": "What if <span class=\"hl\">the Sun</span> vanished?",
-  "outroSubHTML": "LIGHT TAKES 8 MINUTES AND 20 SECONDS TO REACH US.<br>GRAVITY TRAVELS AT THE EXACT SAME SPEED.",
-  "audioSrc": "assets/audio/sun_vanishes_ambient.mp3",
+  "id": "gravity_5s_example",
+  "totalDuration": 80,
+  "showText": true,
+  "titleHTML": "What if <span class=\"hl\">gravity</span> disappeared<br>for 5 seconds?",
+  "outroTitleHTML": "What if <span class=\"hl\">gravity</span> disappeared<br>for 5 seconds?",
+  "outroSubHTML": "GRAVITY IS 10³⁶ TIMES WEAKER THAN ELECTROMAGNETISM<br>YET IT ALONE HOLDS EVERY PLANET AND STAR TOGETHER",
+  "audioSrc": "gravity_audio_mix.mp3",
   "meta": {
-    "title": "What if the Sun vanished?",
-    "style": "cosmic_simulation",
+    "title": "What if gravity disappeared for 5 seconds?",
+    "style": "@man_ia_c",
     "aspectRatio": "9:16",
     "resolution": {
       "width": 1080,
       "height": 1920
     },
-    "fps": 60,
-    "totalDuration": 45,
-    "showText": false,
-    "audioSrc": "assets/audio/sun_vanishes_ambient.mp3"
+    "fps": 30,
+    "totalDuration": 80,
+    "showText": true,
+    "audioSrc": "gravity_audio_mix.mp3"
   },
   "hook": {
     "prefix": "What if",
-    "highlightWord": "the Sun",
-    "highlightColor": "#f59e0b",
-    "suffix": "vanished?",
-    "titleHTML": "What if <span class=\"hl\">the Sun</span> vanished?",
+    "highlightWord": "gravity",
+    "highlightColor": "#7cc4fa",
+    "suffix": "disappeared<br>for 5 seconds?",
+    "titleHTML": "What if <span class=\"hl\">gravity</span> disappeared<br>for 5 seconds?",
     "visibleStart": 0,
-    "visibleEnd": 4
+    "visibleEnd": 4.1
   },
   "timerPhases": [
     {
-      "id": "orbit_countdown",
+      "id": "countdown_realtime",
       "start": 0,
       "end": 8.033,
-      "label": "GRAVITY AND LIGHT",
+      "label": "GRAVITY DISAPPEARS IN",
       "mode": "countdown",
       "countdownFrom": 8.033,
       "timeScale": 1,
       "format": "0:0{sec.3}"
     },
     {
-      "id": "light_arrival_countdown",
+      "id": "return_slowmo",
       "start": 8.033,
-      "end": 16,
-      "label": "LAST SUNLIGHT EN ROUTE",
+      "end": 64,
+      "label": "GRAVITY RETURNS IN",
       "mode": "slowmo_countdown",
-      "countdownFrom": 8,
-      "timeScale": 1,
+      "countdownFrom": 5.002,
+      "timeScale": 11.21,
       "format": "0:0{sec.3}"
     },
     {
-      "id": "darkness_static",
-      "start": 16,
-      "end": 45,
-      "label": "ROGUE PLANET",
+      "id": "returned_static",
+      "start": 64,
+      "end": 72.5,
+      "label": "GRAVITY",
       "mode": "static_serif",
-      "staticText": "LOST IN SPACE",
-      "fadeOutStart": 43.5,
-      "fadeOutEnd": 45
+      "staticText": "BACK",
+      "fadeOutStart": 71.7,
+      "fadeOutEnd": 72.3
     }
   ],
   "subtracks": [
@@ -69,147 +69,436 @@ window.STORY_CONFIG = {
       "start": 0,
       "end": 8.033,
       "type": "static",
-      "text": "EARTH ORBITS THE SUN AT 67,000 MPH"
+      "text": "EARTH SPINS AT 1,037 MPH AT THE EQUATOR"
     },
     {
       "start": 8.033,
-      "end": 16,
+      "end": 42.2,
       "type": "static",
-      "text": "WITHOUT GRAVITY, EARTH FLIES OFF IN A STRAIGHT LINE"
+      "text": "TIME SLOWED DOWN 11×"
     },
     {
-      "start": 16,
-      "end": 24,
-      "type": "static",
-      "text": "THE LAST PHOTONS ARRIVE — TOTAL DARKNESS FALLS"
+      "start": 42.2,
+      "end": 55.4,
+      "type": "telemetry_counter",
+      "template": "ATMOSPHERE EXPANDS TO {value} MILES WIDE",
+      "baseValue": 7918,
+      "ratePerSec": 18450,
+      "anchorTime": 41.88
     },
     {
-      "start": 24,
-      "end": 45,
+      "start": 55.4,
+      "end": 64,
       "type": "static",
-      "text": "SURFACE TEMPERATURE DROPS TO -100°F IN DAYS"
+      "text": "THE MOON FLIES TANGENT INTO DEEP SPACE"
+    },
+    {
+      "start": 64,
+      "end": 66.5,
+      "type": "static",
+      "text": "FREEFALL BEGINS"
+    },
+    {
+      "start": 66.5,
+      "end": 69.3,
+      "type": "static",
+      "text": "CENTRAL PARK, 5 SECONDS LATER"
+    },
+    {
+      "start": 69.3,
+      "end": 72.5,
+      "type": "static",
+      "text": "EVERYTHING SLAMS BACK DOWN AT ONCE"
     }
   ],
   "visualPhases": [
     {
-      "id": "orbital_daylight",
-      "world": "solarSystem",
+      "id": "daylight_park",
+      "world": "parkWorld",
       "lookPreset": "day",
       "start": 0,
       "end": 8.033,
       "triggers": {
-        "sunVisible": true,
-        "gravityActive": true
+        "showAtom": false,
+        "atomStart": 4.2,
+        "atomEnd": 8.033,
+        "xrayMode": false,
+        "starSystem": false,
+        "groundParticles": false,
+        "sandBombs": false
       }
     },
     {
-      "id": "tangential_flight",
-      "world": "solarSystem",
-      "lookPreset": "sunlight_persisting",
+      "id": "xray_centrifugal_rupture",
+      "world": "parkWorld",
+      "lookPreset": "xray_to_nuclear",
       "start": 8.033,
-      "end": 16,
+      "end": 42.2,
       "triggers": {
-        "sunVisible": false,
-        "gravityActive": false,
-        "lightWaveEnRoute": true
+        "xrayMode": true,
+        "starSystem": true,
+        "groundParticles": true,
+        "slowSimFactor": 0.018,
+        "sunFlareWindows": [
+          {
+            "start": 9.5,
+            "end": 11.8,
+            "screenX": 0.67,
+            "screenY": 0.285
+          },
+          {
+            "start": 34.8,
+            "end": 39.6,
+            "screenX": 0.67,
+            "screenY": 0.285
+          }
+        ],
+        "povHandsWindows": [
+          {
+            "start": 15.6,
+            "end": 19.8,
+            "nuclearGlow": false
+          },
+          {
+            "start": 30.6,
+            "end": 34.8,
+            "nuclearGlow": true
+          }
+        ],
+        "sandBombsStart": 27.8,
+        "handsGlow": {
+          "fadeInStart": 30.6,
+          "fadeInEnd": 33.2,
+          "fadeOutStart": 34.8,
+          "fadeOutEnd": 35.4
+        },
+        "peopleGlow": {
+          "start": 34.8,
+          "end": 37.2
+        },
+        "eruption": {
+          "start": 39.4,
+          "end": 41.6
+        },
+        "whiteout": {
+          "start": 41.2,
+          "end": 42.2
+        }
       }
     },
     {
-      "id": "light_extinction",
+      "id": "orbital_decompression",
       "world": "spaceWorld",
-      "lookPreset": "night_grid",
-      "start": 16,
-      "end": 22,
+      "lookPreset": "space",
+      "start": 42.2,
+      "end": 64,
       "triggers": {
-        "lightExtinctionFlash": true,
-        "nightCitiesActive": true
+        "starSystem": true,
+        "whiteoutRecoveryEnd": 43,
+        "shots": [
+          {
+            "id": "expanding_earth",
+            "start": 42.2,
+            "end": 49.2,
+            "earthScale": [
+              1.16,
+              1.52
+            ],
+            "moonVisible": false,
+            "atmoMode": null
+          },
+          {
+            "id": "moon_silhouette",
+            "start": 49.2,
+            "end": 52.2,
+            "earthScale": [
+              3.8,
+              3.8
+            ],
+            "moonVisible": true,
+            "atmoMode": null
+          },
+          {
+            "id": "moon_limb_escape",
+            "start": 52.2,
+            "end": 55.4,
+            "earthVisible": false,
+            "moonVisible": true,
+            "atmoMode": "moon_horizon"
+          },
+          {
+            "id": "core_unbinding_horizon",
+            "start": 55.4,
+            "end": 64,
+            "earthVisible": false,
+            "moonVisible": false,
+            "atmoMode": "horizon",
+            "flashEnd": 56.1
+          }
+        ]
       }
     },
     {
-      "id": "rogue_freeze",
-      "world": "spaceWorld",
-      "lookPreset": "deep_space_ice",
-      "start": 22,
-      "end": 45,
+      "id": "lidar_pointcloud_return",
+      "world": "lidarWorld",
+      "lookPreset": "lidar",
+      "start": 64,
+      "end": 72.5,
       "triggers": {
-        "iceSpread": true,
-        "gridFailure": true,
-        "zoomOut": true
+        "pointCount": 115000,
+        "starSystem": true,
+        "secondBlastStart": 69.3,
+        "wireframeHideDelay": 0.2
+      }
+    },
+    {
+      "id": "outro_card",
+      "world": "none",
+      "lookPreset": "fade_black",
+      "start": 72.5,
+      "end": 80,
+      "triggers": {
+        "fadeStart": 73.4,
+        "fadeEnd": 74.2
       }
     }
   ],
   "cameraKeyframes": [
     {
-      "id": "cam_orbit_sweep",
+      "id": "cam_daylight_pan",
       "start": 0,
       "end": 8.033,
-      "interpStart": 0,
-      "interpEnd": 8.033,
+      "interpStart": 2.5,
+      "interpEnd": 7.8,
       "posFrom": [
-        5.6,
-        0.9,
-        3.6
+        0.25,
+        1.62,
+        8.4
       ],
       "posTo": [
-        5.6,
-        2.3,
-        -3
+        -0.45,
+        1.62,
+        8.4
       ],
       "lookFrom": [
-        -4.5,
-        1,
-        0
+        0.15,
+        2.15,
+        -10
       ],
       "lookTo": [
-        -8.5,
-        1.7,
-        0
+        -1.35,
+        2.15,
+        -10
       ],
-      "lensFov": 48
+      "handheldDrift": 1
     },
     {
-      "id": "cam_tangent_escape",
+      "id": "cam_xray_establish",
       "start": 8.033,
-      "end": 16,
-      "interpStart": 8.033,
+      "end": 9.5,
+      "posFrom": [
+        0.15,
+        1.62,
+        8.4
+      ],
+      "posTo": [
+        0.15,
+        1.62,
+        8.4
+      ],
+      "lookFrom": [
+        0.1,
+        2.15,
+        -10
+      ],
+      "lookTo": [
+        0.1,
+        2.15,
+        -10
+      ],
+      "handheldDrift": 1
+    },
+    {
+      "id": "cam_xray_sun_tilt",
+      "start": 9.5,
+      "end": 11.8,
+      "interpStart": 9.5,
+      "interpEnd": 10.2,
+      "posFrom": [
+        0.15,
+        1.58,
+        8.4
+      ],
+      "posTo": [
+        -2.5,
+        1.58,
+        5.5
+      ],
+      "lookFrom": [
+        0.1,
+        2.15,
+        -10
+      ],
+      "lookTo": [
+        -6.5,
+        3.6,
+        -10
+      ],
+      "handheldDrift": 1
+    },
+    {
+      "id": "cam_xray_leaping_dog",
+      "start": 11.8,
+      "end": 14.5,
+      "interpStart": 11.8,
+      "interpEnd": 13,
+      "posFrom": [
+        -1.5,
+        1.45,
+        6.5
+      ],
+      "posTo": [
+        -2.1,
+        1.45,
+        4.2
+      ],
+      "lookFrom": [
+        -1.5,
+        1.85,
+        -10
+      ],
+      "lookTo": [
+        -2.5,
+        1.85,
+        -10
+      ],
+      "handheldDrift": 1
+    },
+    {
+      "id": "cam_pov_hands_weightless",
+      "start": 14.5,
+      "end": 19.8,
+      "interpStart": 14.5,
       "interpEnd": 16,
       "posFrom": [
-        -3.6,
-        2,
+        0.05,
+        1.68,
+        6.1
+      ],
+      "posTo": [
+        0.05,
+        1.68,
+        6.1
+      ],
+      "lookFrom": [
+        0.05,
+        1.6,
+        -8
+      ],
+      "lookTo": [
+        0.05,
+        -2.35,
+        0.8
+      ],
+      "handheldDrift": 0.6
+    },
+    {
+      "id": "cam_centrifugal_drift_pan",
+      "start": 19.8,
+      "end": 27.8,
+      "interpStart": 23.2,
+      "interpEnd": 25.2,
+      "posFrom": [
+        -2.2,
+        1.58,
+        6.8
+      ],
+      "posTo": [
+        0.15,
+        1.58,
+        8.4
+      ],
+      "lookFrom": [
+        -2.5,
+        2.05,
+        -10
+      ],
+      "lookTo": [
+        0.1,
+        2.05,
+        -10
+      ],
+      "handheldDrift": 1
+    },
+    {
+      "id": "cam_soil_and_boiling_blood_hands",
+      "start": 27.8,
+      "end": 34.8,
+      "interpStart": 30.4,
+      "interpEnd": 31.6,
+      "posFrom": [
+        0.05,
+        1.68,
+        6.1
+      ],
+      "posTo": [
+        0.05,
+        1.68,
+        6.1
+      ],
+      "lookFrom": [
+        0.05,
+        -3.2,
+        1.8
+      ],
+      "lookTo": [
+        0.05,
+        -2.35,
+        0.8
+      ],
+      "handheldDrift": 0.6
+    },
+    {
+      "id": "cam_mantle_eruption_whiteout",
+      "start": 34.8,
+      "end": 42.2,
+      "interpStart": 38.8,
+      "interpEnd": 40.8,
+      "posFrom": [
+        -3.4,
+        1.55,
         4.2
       ],
       "posTo": [
-        -5,
-        1.4,
-        3.4
+        0.15,
+        1.55,
+        8.2
       ],
       "lookFrom": [
-        -5.8,
-        0.7,
-        0
+        -6.8,
+        2.85,
+        -10
       ],
       "lookTo": [
-        0.4,
-        1.3,
-        0
+        0.1,
+        3.2,
+        -10
       ],
-      "lensFov": 48
+      "handheldDrift": 1
     },
     {
-      "id": "cam_extinction_close",
-      "start": 16,
-      "end": 22,
-      "interpStart": 16,
-      "interpEnd": 22,
+      "id": "cam_orbital_space_wide",
+      "start": 42.2,
+      "end": 52.2,
       "posFrom": [
-        -5,
-        1.4,
-        3.4
+        0,
+        0,
+        17.5
       ],
       "posTo": [
-        -2,
-        2.2,
-        6.2
+        0,
+        0,
+        17.5
       ],
       "lookFrom": [
         0,
@@ -221,23 +510,21 @@ window.STORY_CONFIG = {
         0,
         0
       ],
-      "lensFov": 48
+      "handheldDrift": 0
     },
     {
-      "id": "cam_rogue_zoomout",
-      "start": 22,
-      "end": 45,
-      "interpStart": 30,
-      "interpEnd": 45,
+      "id": "cam_orbital_horizon",
+      "start": 52.2,
+      "end": 64,
       "posFrom": [
-        -2,
-        2.2,
-        6.2
+        0,
+        0,
+        16.5
       ],
       "posTo": [
-        -25,
-        60,
-        120
+        0,
+        0,
+        16.5
       ],
       "lookFrom": [
         0,
@@ -249,90 +536,174 @@ window.STORY_CONFIG = {
         0,
         0
       ],
-      "lensFov": 48
+      "handheldDrift": 0
+    },
+    {
+      "id": "cam_lidar_return_drift",
+      "start": 64,
+      "end": 72.5,
+      "interpStart": 64,
+      "interpEnd": 69.3,
+      "posFrom": [
+        -0.55,
+        1.95,
+        8.8
+      ],
+      "posTo": [
+        0.35,
+        1.95,
+        7.6
+      ],
+      "lookFrom": [
+        -0.2,
+        4.6,
+        -16
+      ],
+      "lookTo": [
+        0.2,
+        4.6,
+        -16
+      ],
+      "handheldDrift": 0
     }
   ],
   "outro": {
-    "titleHTML": "What if <span class=\"hl\">the Sun</span> vanished?",
-    "subHTML": "LIGHT TAKES 8 MINUTES AND 20 SECONDS TO REACH US.<br>GRAVITY TRAVELS AT THE EXACT SAME SPEED.",
+    "titleHTML": "What if <span class=\"hl\">gravity</span> disappeared<br>for 5 seconds?",
+    "subHTML": "GRAVITY IS 10³⁶ TIMES WEAKER THAN ELECTROMAGNETISM<br>YET IT ALONE HOLDS EVERY PLANET AND STAR TOGETHER",
     "facts": [
-      "LIGHT TAKES 8 MINUTES AND 20 SECONDS TO REACH US.",
-      "GRAVITY TRAVELS AT THE EXACT SAME SPEED."
+      "GRAVITY IS 10³⁶ TIMES WEAKER THAN ELECTROMAGNETISM",
+      "YET IT ALONE HOLDS EVERY PLANET AND STAR TOGETHER"
     ]
   },
   "scenes": [
     {
       "id": 1,
-      "name": "Orbital Daylight",
+      "name": "Central Park Daylight & Orbiting Mass",
       "start": 0,
       "end": 8.033,
-      "desc": "Earth orbits the radiant Sun normally; smooth sweep camera tracking the illuminated hemisphere.",
-      "color": "#f59e0b",
-      "badge": "NORMAL"
+      "badge": "Low-Poly Daylight",
+      "color": "#10b981",
+      "desc": "Picnic en Central Park mientras la rotación terrestre mantiene todo anclado por gravedad."
     },
     {
       "id": 2,
-      "name": "Gravitational Cut",
+      "name": "Gravity Vanishes: Weightless X-Ray & Sun",
       "start": 8.033,
-      "end": 16,
-      "desc": "The Sun vanishes instantly. Gravity ceases, Earth flies tangentially into interstellar space at 67,000 mph. Daylight persists because photons are still en route.",
-      "color": "#ef4444",
-      "badge": "TANGENT"
+      "end": 14.8,
+      "badge": "X-Ray + Zero-G",
+      "color": "#0ea5e9",
+      "desc": "Tiempo ralentizado 11x. El aire escapa al espacio y el perro queda flotando en trayectoria tangencial."
     },
     {
       "id": 3,
-      "name": "Light Extinction (8 Minutes Later)",
-      "start": 16,
-      "end": 22,
-      "desc": "The last sunlight shell reaches Earth. Global darkness falls instantly. City lights illuminate the night continents.",
-      "color": "#3b82f6",
-      "badge": "EXTINCTION"
+      "name": "Vacuum & Weightless Hands (POV)",
+      "start": 14.8,
+      "end": 19.8,
+      "badge": "1st Person Hands",
+      "color": "#6366f1",
+      "desc": "Tus manos flotan frente a ti mientras la presión atmosférica cae a cero instantáneamente."
     },
     {
       "id": 4,
-      "name": "The Great Freeze & Rogue Earth",
-      "start": 22,
-      "end": 45,
-      "desc": "Atmosphere and oceans begin to freeze solid into a cracked icy crust. Power grids fail. Camera executes a dynamic zoom-out as Rogue Earth wanders the Milky Way.",
-      "color": "#6366f1",
-      "badge": "ROGUE"
+      "name": "Centrifugal Drift & Unbound Matter",
+      "start": 19.8,
+      "end": 28,
+      "badge": "Centrifugal",
+      "color": "#8b5cf6",
+      "desc": "Sin gravedad que curve la trayectoria, océanos, personas y edificios salen disparados en línea recta."
+    },
+    {
+      "id": 5,
+      "name": "Core Decompression: Crust Rupture & Glow",
+      "start": 28,
+      "end": 42.2,
+      "badge": "Core Decompression",
+      "color": "#f59e0b",
+      "desc": "El núcleo terrestre a 3,6 millones de atmósferas se descomprime como un resorte termonuclear."
+    },
+    {
+      "id": 6,
+      "name": "Planetary Unbinding & Moon Escapes",
+      "start": 42.2,
+      "end": 64,
+      "badge": "Orbital Space",
+      "color": "#ec4899",
+      "desc": "La corteza y los océanos se expanden hacia el espacio y la Luna escapa en línea recta."
+    },
+    {
+      "id": 7,
+      "name": "Gravity Returns: LiDAR City & Catastrophic Collapse",
+      "start": 64,
+      "end": 72.5,
+      "badge": "LiDAR PointCloud",
+      "color": "#3b82f6",
+      "desc": "La gravedad regresa tras 5 segundos; toda la corteza levantada colapsa liberando energía sísmica global."
+    },
+    {
+      "id": 8,
+      "name": "Final Outro Card",
+      "start": 72.5,
+      "end": 80,
+      "badge": "Outro",
+      "color": "#64748b",
+      "desc": "Pantalla negra final con el dato científico de la debilidad relativa de la gravedad."
     }
   ],
   "subtitles": [
     {
-      "start": 0.5,
-      "end": 4,
-      "text": "Earth orbits the Sun at 67,000 mph."
+      "start": 5,
+      "end": 7.8,
+      "text": "You're in Central Park, New York."
     },
     {
-      "start": 8.033,
-      "end": 12,
-      "text": "Gravity vanishes instantly."
+      "start": 8.5,
+      "end": 12.2,
+      "text": "Nothing holds the atmosphere down<br>anymore."
     },
     {
-      "start": 12.2,
-      "end": 15.8,
-      "text": "Earth hurtles into interstellar space in a straight line."
+      "start": 15.5,
+      "end": 19.4,
+      "text": "You start drifting upward in a straight line."
     },
     {
-      "start": 16,
-      "end": 20,
-      "text": "8 minutes and 20 seconds later... the last sunlight arrives."
+      "start": 20.3,
+      "end": 23.9,
+      "text": "Earth's spin flings the oceans into the sky."
     },
     {
-      "start": 20.5,
-      "end": 25,
-      "text": "Total darkness blankets the globe."
+      "start": 24.3,
+      "end": 27.7,
+      "text": "And the real danger is right beneath your feet."
     },
     {
-      "start": 25.5,
-      "end": 32,
-      "text": "Oceans freeze into thick planetary ice sheets."
+      "start": 30.8,
+      "end": 34.8,
+      "text": "Earth's core is compressed at 3.6 million atmospheres."
     },
     {
-      "start": 32.5,
-      "end": 43,
-      "text": "Earth becomes a frozen rogue planet wandering the galaxy forever."
+      "start": 36,
+      "end": 40,
+      "text": "Without gravity, the planet uncoils like a spring."
+    },
+    {
+      "start": 43.5,
+      "end": 48.8,
+      "text": "The crust shatters outward into open space."
+    },
+    {
+      "start": 49.4,
+      "end": 54.4,
+      "text": "The Moon breaks orbit and sails into the dark."
+    },
+    {
+      "start": 64.6,
+      "end": 68,
+      "text": "Gravity snaps back to full strength."
+    },
+    {
+      "start": 68.4,
+      "end": 71.8,
+      "text": "And an entire planet falls back down on itself."
     }
   ]
 };

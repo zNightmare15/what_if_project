@@ -20,7 +20,8 @@ window.WorldFXOverlay = (function() {
     // =========================================================================
     // 1. ANIMATED 3D ATOM & BARE NUCLEUS (0.0s - 10.2s: frame_001..005)
     // =========================================================================
-    if (t < 10.2) {
+    const showAtom = state.showAtom !== false;
+    if (showAtom && t < 10.2) {
       let moveProg = Math.max(0, Math.min(1, (t - 4.0) / 1.1));
       moveProg = moveProg * moveProg * (3 - 2 * moveProg);
 
