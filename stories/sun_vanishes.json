@@ -1,0 +1,219 @@
+{
+  "id": "sun_vanishes",
+  "meta": {
+    "title": "What if the Sun vanished?",
+    "style": "cosmic_simulation",
+    "aspectRatio": "9:16",
+    "resolution": { "width": 1080, "height": 1920 },
+    "fps": 60,
+    "totalDuration": 45.0,
+    "showText": false,
+    "audioSrc": "assets/audio/sun_vanishes_ambient.mp3"
+  },
+  "hook": {
+    "prefix": "What if",
+    "highlightWord": "the Sun",
+    "highlightColor": "#f59e0b",
+    "suffix": "vanished?",
+    "titleHTML": "What if <span class=\"hl\">the Sun</span> vanished?",
+    "visibleStart": 0.0,
+    "visibleEnd": 4.0
+  },
+  "scenes": [
+    {
+      "id": 1,
+      "name": "Orbital Daylight",
+      "start": 0.0,
+      "end": 8.033,
+      "desc": "Earth orbits the radiant Sun normally; smooth sweep camera tracking the illuminated hemisphere.",
+      "color": "#f59e0b",
+      "badge": "NORMAL"
+    },
+    {
+      "id": 2,
+      "name": "Gravitational Cut",
+      "start": 8.033,
+      "end": 16.0,
+      "desc": "The Sun vanishes instantly. Gravity ceases, Earth flies tangentially into interstellar space at 67,000 mph. Daylight persists because photons are still en route.",
+      "color": "#ef4444",
+      "badge": "TANGENT"
+    },
+    {
+      "id": 3,
+      "name": "Light Extinction (8 Minutes Later)",
+      "start": 16.0,
+      "end": 22.0,
+      "desc": "The last sunlight shell reaches Earth. Global darkness falls instantly. City lights illuminate the night continents.",
+      "color": "#3b82f6",
+      "badge": "EXTINCTION"
+    },
+    {
+      "id": 4,
+      "name": "The Great Freeze & Rogue Earth",
+      "start": 22.0,
+      "end": 45.0,
+      "desc": "Atmosphere and oceans begin to freeze solid into a cracked icy crust. Power grids fail. Camera executes a dynamic zoom-out as Rogue Earth wanders the Milky Way.",
+      "color": "#6366f1",
+      "badge": "ROGUE"
+    }
+  ],
+  "visualPhases": [
+    {
+      "id": "orbital_daylight",
+      "world": "solarSystem",
+      "lookPreset": "day",
+      "start": 0.0,
+      "end": 8.033,
+      "triggers": { "sunVisible": true, "gravityActive": true }
+    },
+    {
+      "id": "tangential_flight",
+      "world": "solarSystem",
+      "lookPreset": "sunlight_persisting",
+      "start": 8.033,
+      "end": 16.0,
+      "triggers": { "sunVisible": false, "gravityActive": false, "lightWaveEnRoute": true }
+    },
+    {
+      "id": "light_extinction",
+      "world": "spaceWorld",
+      "lookPreset": "night_grid",
+      "start": 16.0,
+      "end": 22.0,
+      "triggers": { "lightExtinctionFlash": true, "nightCitiesActive": true }
+    },
+    {
+      "id": "rogue_freeze",
+      "world": "spaceWorld",
+      "lookPreset": "deep_space_ice",
+      "start": 22.0,
+      "end": 45.0,
+      "triggers": { "iceSpread": true, "gridFailure": true, "zoomOut": true }
+    }
+  ],
+  "cameraKeyframes": [
+    {
+      "id": "cam_orbit_sweep",
+      "start": 0.0,
+      "end": 8.033,
+      "interpStart": 0.0,
+      "interpEnd": 8.033,
+      "posFrom": [5.6, 0.9, 3.6],
+      "posTo": [5.6, 2.3, -3.0],
+      "lookFrom": [-4.5, 1.0, 0.0],
+      "lookTo": [-8.5, 1.7, 0.0],
+      "lensFov": 48
+    },
+    {
+      "id": "cam_tangent_escape",
+      "start": 8.033,
+      "end": 16.0,
+      "interpStart": 8.033,
+      "interpEnd": 16.0,
+      "posFrom": [-3.6, 2.0, 4.2],
+      "posTo": [-5.0, 1.4, 3.4],
+      "lookFrom": [-5.8, 0.7, 0.0],
+      "lookTo": [0.4, 1.3, 0.0],
+      "lensFov": 48
+    },
+    {
+      "id": "cam_extinction_close",
+      "start": 16.0,
+      "end": 22.0,
+      "interpStart": 16.0,
+      "interpEnd": 22.0,
+      "posFrom": [-5.0, 1.4, 3.4],
+      "posTo": [-2.0, 2.2, 6.2],
+      "lookFrom": [0.0, 0.0, 0.0],
+      "lookTo": [0.0, 0.0, 0.0],
+      "lensFov": 48
+    },
+    {
+      "id": "cam_rogue_zoomout",
+      "start": 22.0,
+      "end": 45.0,
+      "interpStart": 30.0,
+      "interpEnd": 45.0,
+      "posFrom": [-2.0, 2.2, 6.2],
+      "posTo": [-25.0, 60.0, 120.0],
+      "lookFrom": [0.0, 0.0, 0.0],
+      "lookTo": [0.0, 0.0, 0.0],
+      "lensFov": 48
+    }
+  ],
+  "timerPhases": [
+    {
+      "id": "orbit_countdown",
+      "start": 0.0,
+      "end": 8.033,
+      "label": "GRAVITY AND LIGHT",
+      "mode": "countdown",
+      "countdownFrom": 8.033,
+      "timeScale": 1.0,
+      "format": "0:0{sec.3}"
+    },
+    {
+      "id": "light_arrival_countdown",
+      "start": 8.033,
+      "end": 16.0,
+      "label": "LAST SUNLIGHT EN ROUTE",
+      "mode": "slowmo_countdown",
+      "countdownFrom": 8.0,
+      "timeScale": 1.0,
+      "format": "0:0{sec.3}"
+    },
+    {
+      "id": "darkness_static",
+      "start": 16.0,
+      "end": 45.0,
+      "label": "ROGUE PLANET",
+      "mode": "static_serif",
+      "staticText": "LOST IN SPACE",
+      "fadeOutStart": 43.5,
+      "fadeOutEnd": 45.0
+    }
+  ],
+  "subtracks": [
+    {
+      "start": 0.0,
+      "end": 8.033,
+      "type": "static",
+      "text": "EARTH ORBITS THE SUN AT 67,000 MPH"
+    },
+    {
+      "start": 8.033,
+      "end": 16.0,
+      "type": "static",
+      "text": "WITHOUT GRAVITY, EARTH FLIES OFF IN A STRAIGHT LINE"
+    },
+    {
+      "start": 16.0,
+      "end": 24.0,
+      "type": "static",
+      "text": "THE LAST PHOTONS ARRIVE — TOTAL DARKNESS FALLS"
+    },
+    {
+      "start": 24.0,
+      "end": 45.0,
+      "type": "static",
+      "text": "SURFACE TEMPERATURE DROPS TO -100°F IN DAYS"
+    }
+  ],
+  "subtitles": [
+    { "start": 0.5, "end": 4.0, "text": "Earth orbits the Sun at 67,000 mph." },
+    { "start": 8.033, "end": 12.0, "text": "Gravity vanishes instantly." },
+    { "start": 12.2, "end": 15.8, "text": "Earth hurtles into interstellar space in a straight line." },
+    { "start": 16.0, "end": 20.0, "text": "8 minutes and 20 seconds later... the last sunlight arrives." },
+    { "start": 20.5, "end": 25.0, "text": "Total darkness blankets the globe." },
+    { "start": 25.5, "end": 32.0, "text": "Oceans freeze into thick planetary ice sheets." },
+    { "start": 32.5, "end": 43.0, "text": "Earth becomes a frozen rogue planet wandering the galaxy forever." }
+  ],
+  "outro": {
+    "titleHTML": "What if <span class=\"hl\">the Sun</span> vanished?",
+    "subHTML": "LIGHT TAKES 8 MINUTES AND 20 SECONDS TO REACH US.<br>GRAVITY TRAVELS AT THE EXACT SAME SPEED.",
+    "facts": [
+      "LIGHT TAKES 8 MINUTES AND 20 SECONDS TO REACH US.",
+      "GRAVITY TRAVELS AT THE EXACT SAME SPEED."
+    ]
+  }
+}

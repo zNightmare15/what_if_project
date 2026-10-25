@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>What if the Sun vanished? — 45s deterministic scene (no on-screen text)</title>
+<style>
+  html, body { margin: 0; background: #000; overflow: hidden; }
+  #stage { position: relative; width: 405px; height: 720px; margin: 0 auto; background: #000; }
+  canvas { display: block; }
+  #flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+  #vignette { position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0) 52%, rgba(0,0,0,0.62) 100%); }
+  #fade { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; }
+</style>
+</head>
+<body>
+<div id="stage"><div id="flash"></div><div id="vignette"></div><div id="fade"></div></div>
+<script src="../three.min.js"></script>
+<script>
+(function () {
+  'use strict';
+  const W = 405, H = 720, DURATION = 45.0;
+  const T_CUT = 8.033;      // the Sun vanishes
+  const T_LIGHT = 16.0;     // last sunlight reaches Earth (stylised "8 minutes")
+  const ORBIT_R = 14, OMEGA = 0.12, EARTH_R = 1.2;
+  const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+  const lerp = (a, b, k) => a + (b - a) * clamp(k, 0, 1);
+  const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+
+  // ---------- deterministic RNG + 3D value noise ----------
+  let seed = 1337;
+  const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+  const hash3 = (x, y, z) => { let h = (x * 374761393 + y * 668265263 + z * 2147483647) | 0;
+    h = (h ^ (h >>> 13)) * 1274126177 | 0; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
+  function vnoise(x, y, z) {
+    const xi = Math.floor(x), yi = Math.floor(y), zi = Math.floor(z);
+    const xf = x - xi, yf = y - yi, zf = z - zi;
+    const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf), w = zf * zf * (3 - 2 * zf);
+    let r = 0;
+    for (let dz = 0; dz < 2; dz++) for (let dy = 0; dy < 2; dy++) for (let dx = 0; dx < 2; dx++) {
+      const wt = (dx ? u : 1 - u) * (dy ? v : 1 - v) * (dz ? w : 1 - w);
+      r += wt * hash3(xi + dx, yi + dy, zi + dz);
+    }
+    return r;
+  }
+  function fbm(x, y, z, oct) {
+    let a = 0.5, s = 0, f = 1;
+    for (let i = 0; i < oct; i++) { s += a * vnoise(x * f, y * f, z * f); f *= 2.03; a *= 0.5; }
+    return s;
+  }
+
+  // ---------- procedural planet textures (seamless: sampled on the sphere) ----------
+  const TW = 1024, TH = 512;
+  function makePlanetTextures() {
+    const day = document.createElement('canvas'), ice = document.createElement('canvas'),
+          night = document.createElement('canvas'), cloud = document.createElement('canvas');
+    [day, ice, night, cloud].forEach(c => { c.width = TW; c.height = TH; });
+    const dctx = day.getContext('2d'), ictx = ice.getContext('2d'),
+          nctx = night.getContext('2d'), cctx = cloud.getContext('2d');
+    const dd = dctx.createImageData(TW, TH), id = ictx.createImageData(TW, TH),
+          nd = nctx.createImageData(TW, TH), cd = cctx.createImageData(TW, TH);
+    for (let y = 0; y < TH; y++) {
+      const lat = (0.5 - y / TH) * Math.PI;
+      for (let x = 0; x < TW; x++) {
+        const lon = (x / TW) * Math.PI * 2;
+        const px = Math.cos(lat) * Math.cos(lon), py = Math.sin(lat), pz = Math.cos(lat) * Math.sin(lon);
+        const h = fbm(px * 2.4 + 7, py * 2.4, pz * 2.4, 6);
+        const land = smooth(0.50, 0.53, h);
+        const polar = smooth(0.80, 0.93, Math.abs(py) + (fbm(px * 6, py * 6, pz * 6, 3) - 0.5) * 0.22);
+        const elev = clamp((h - 0.52) * 5, 0, 1);
+        const moist = fbm(px * 3 + 40, py * 3, pz * 3, 4);
+        let r, g, b;
+        // ocean: deep -> shallow
+        const depth = clamp((0.50 - h) * 6, 0, 1);
+        const or = lerp(24, 6, depth), og = lerp(86, 28, depth), ob = lerp(150, 78, depth);
+        // land: green/desert/rock
+        const lr = lerp(lerp(52, 176, smooth(0.45, 0.62, 1 - moist)), 116, elev * 0.8);
+        const lg = lerp(lerp(104, 150, smooth(0.45, 0.62, 1 - moist)), 108, elev * 0.8);
+        const lb = lerp(lerp(48, 98, smooth(0.45, 0.62, 1 - moist)), 98, elev * 0.8);
+        r = lerp(or, lr, land); g = lerp(og, lg, land); b = lerp(ob, lb, land);
+        r = lerp(r, 242, polar); g = lerp(g, 246, polar); b = lerp(b, 252, polar);
+        const i4 = (y * TW + x) * 4;
+        dd.data[i4] = r; dd.data[i4 + 1] = g; dd.data[i4 + 2] = b; dd.data[i4 + 3] = 255;
+        // frozen: oceans become cracked white-blue ice, land gets snow
+        const crack = Math.abs(fbm(px * 14, py * 14, pz * 14, 3) - 0.5) < 0.014 ? 0.55 : 1.0;
+        const ir = lerp(196, 244, land) * crack, ig = lerp(222, 247, land) * crack, ib = lerp(244, 252, land) * crack;
+        id.data[i4] = ir; id.data[i4 + 1] = ig; id.data[i4 + 2] = ib; id.data[i4 + 3] = 255;
+        // city lights: clustered dots on land, brighter in temperate latitudes
+        const cl = fbm(px * 18 + 90, py * 18, pz * 18, 4);
+        const dots = hash3(x >> 1, y >> 1, 11) > 0.80 ? 1 : 0;
+        const lit = land * (1 - polar) * smooth(0.54, 0.66, cl) * (0.3 + dots * 0.9) * smooth(0.05, 0.30, 1 - moist * 0.6);
+        nd.data[i4] = 255 * lit; nd.data[i4 + 1] = 190 * lit; nd.data[i4 + 2] = 96 * lit; nd.data[i4 + 3] = 255;
+        // clouds (alpha)
+        const cv = fbm(px * 3.1 + 200, py * 5.2, pz * 3.1, 6);
+        const ca = smooth(0.52, 0.72, cv);
+        cd.data[i4] = 255; cd.data[i4 + 1] = 255; cd.data[i4 + 2] = 255; cd.data[i4 + 3] = 255 * ca * 0.88;
+      }
+    }
+    dctx.putImageData(dd, 0, 0); ictx.putImageData(id, 0, 0);
+    nctx.putImageData(nd, 0, 0); cctx.putImageData(cd, 0, 0);
+    const tex = c => { const t = new THREE.CanvasTexture(c); t.anisotropy = 4; t.needsUpdate = true; return t; };
+    return { day: tex(day), ice: tex(ice), night: tex(night), cloud: tex(cloud) };
+  }
+
+  function makeSunTexture() {
+    const c = document.createElement('canvas'); c.width = 1024; c.height = 512;
+    const ctx = c.getContext('2d'), img = ctx.createImageData(1024, 512);
+    for (let y = 0; y < 512; y++) {
+      const lat = (0.5 - y / 512) * Math.PI;
+      for (let x = 0; x < 1024; x++) {
+        const lon = (x / 1024) * Math.PI * 2;
+        const px = Math.cos(lat) * Math.cos(lon), py = Math.sin(lat), pz = Math.cos(lat) * Math.sin(lon);
+        const g = fbm(px * 9, py * 9, pz * 9, 5), f = fbm(px * 3 + 20, py * 3, pz * 3, 4);
+        const k = clamp(0.35 + g * 0.8 + (f - 0.5) * 0.5, 0, 1);
+        const i4 = (y * 1024 + x) * 4;
+        img.data[i4] = lerp(255, 255, k); img.data[i4 + 1] = lerp(120, 236, k); img.data[i4 + 2] = lerp(18, 170, k * k); img.data[i4 + 3] = 255;
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+    const t = new THREE.CanvasTexture(c); t.needsUpdate = true; return t;
+  }
+
+  function glowTexture(stops) {
+    const c = document.createElement('canvas'); c.width = c.height = 256;
+    const ctx = c.getContext('2d'), g = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
+    stops.forEach(s => g.addColorStop(s[0], s[1]));
+    ctx.fillStyle = g; ctx.fillRect(0, 0, 256, 256);
+    const t = new THREE.CanvasTexture(c); t.needsUpdate = true; return t;
+  }
+
+  // ---------- renderer / scene ----------
+  const stage = document.getElementById('stage');
+  const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+  renderer.setPixelRatio(window.devicePixelRatio || 1);
+  renderer.setSize(W, H);
+  renderer.setClearColor(0x000000, 1);
+  stage.insertBefore(renderer.domElement, stage.firstChild);
+  const DPR = window.devicePixelRatio || 1;
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(48, W / H, 0.1, 3000);
+
+  // stars
+  const starGeo = new THREE.BufferGeometry();
+  const starPos = new Float32Array(7000 * 3), starCol = new Float32Array(7000 * 3);
+  for (let i = 0; i < 7000; i++) {
+    const r = 900, th = rnd() * Math.PI * 2, ph = Math.acos(2 * rnd() - 1);
+    starPos[i * 3] = r * Math.sin(ph) * Math.cos(th); starPos[i * 3 + 1] = r * Math.cos(ph); starPos[i * 3 + 2] = r * Math.sin(ph) * Math.sin(th);
+    const b = 0.35 + rnd() * 0.65, warm = rnd();
+    starCol[i * 3] = b * (0.85 + warm * 0.15); starCol[i * 3 + 1] = b * 0.9; starCol[i * 3 + 2] = b * (1.0 - warm * 0.25);
+  }
+  starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+  starGeo.setAttribute('color', new THREE.BufferAttribute(starCol, 3));
+  const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({
+    size: 1.7 * DPR, sizeAttenuation: false, vertexColors: true, transparent: true, depthWrite: false,
+    map: glowTexture([[0, 'rgba(255,255,255,1)'], [0.4, 'rgba(255,255,255,0.7)'], [1, 'rgba(255,255,255,0)']]) }));
+  scene.add(stars);
+
+  // Sun
+  const sunGroup = new THREE.Group();
+  const sunMesh = new THREE.Mesh(new THREE.SphereGeometry(3, 64, 64), new THREE.MeshBasicMaterial({ map: makeSunTexture() }));
+  sunGroup.add(sunMesh);
+  const glowA = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture([[0, 'rgba(255,230,170,0.95)'], [0.25, 'rgba(255,170,60,0.55)'], [0.6, 'rgba(255,100,20,0.14)'], [1, 'rgba(255,80,0,0)']]), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
+  glowA.scale.set(15, 15, 1); sunGroup.add(glowA);
+  const glowB = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture([[0, 'rgba(255,240,200,0.5)'], [0.5, 'rgba(255,150,60,0.12)'], [1, 'rgba(255,120,40,0)']]), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
+  glowB.scale.set(34, 34, 1); sunGroup.add(glowB);
+  scene.add(sunGroup);
+
+  // Earth (custom shader: day / frozen / night-lights / sunlight / rim)
+  const tx = makePlanetTextures();
+  const earthUniforms = {
+    dayMap: { value: tx.day }, iceMap: { value: tx.ice }, nightMap: { value: tx.night },
+    lightDir: { value: new THREE.Vector3(1, 0, 0) }, lightI: { value: 1 },
+    iceMix: { value: 0 }, nightI: { value: 1 }, ambient: { value: 0.09 }, rimI: { value: 1 }
+  };
+  const earthMat = new THREE.ShaderMaterial({
+    uniforms: earthUniforms,
+    vertexShader: 'varying vec2 vUv; varying vec3 vN; varying vec3 vV;' +
+      'void main(){ vUv = uv; vec4 wp = modelMatrix * vec4(position,1.0); vN = normalize(mat3(modelMatrix) * normal);' +
+      ' vV = normalize(cameraPosition - wp.xyz); gl_Position = projectionMatrix * viewMatrix * wp; }',
+    fragmentShader: 'uniform sampler2D dayMap; uniform sampler2D iceMap; uniform sampler2D nightMap;' +
+      'uniform vec3 lightDir; uniform float lightI; uniform float iceMix; uniform float nightI; uniform float ambient; uniform float rimI;' +
+      'varying vec2 vUv; varying vec3 vN; varying vec3 vV;' +
+      'void main(){ vec3 n = normalize(vN); float ndl = dot(n, normalize(lightDir));' +
+      ' vec3 alb = mix(texture2D(dayMap, vUv).rgb, texture2D(iceMap, vUv).rgb, iceMix);' +
+      ' float diff = smoothstep(-0.02, 0.35, ndl) * lightI;' +
+      ' vec3 col = alb * (vec3(0.06,0.09,0.15) * ambient * 11.0 + vec3(1.0,0.93,0.82) * diff * 1.25);' +
+      ' float dark = 1.0 - smoothstep(-0.12, 0.10, ndl * lightI + (1.0 - lightI) * -1.0);' +
+      ' col += texture2D(nightMap, vUv).rgb * dark * nightI * 1.7 * (1.0 - iceMix * 0.55);' +
+      ' float fres = pow(1.0 - clamp(dot(n, normalize(vV)), 0.0, 1.0), 3.0);' +
+      ' vec3 rimCol = mix(vec3(0.30,0.58,1.0), vec3(0.72,0.88,1.0), iceMix);' +
+      ' col += rimCol * fres * (0.25 + 1.3 * smoothstep(-0.35, 0.5, ndl) * lightI) * rimI;' +
+      ' gl_FragColor = vec4(col, 1.0); }'
+  });
+  const earthGroup = new THREE.Group();
+  const earthMesh = new THREE.Mesh(new THREE.SphereGeometry(EARTH_R, 96, 96), earthMat);
+  earthGroup.add(earthMesh);
+  const cloudMat = new THREE.ShaderMaterial({
+    transparent: true, depthWrite: false,
+    uniforms: { map: { value: tx.cloud }, lightDir: earthUniforms.lightDir, lightI: earthUniforms.lightI, fade: { value: 1 } },
+    vertexShader: 'varying vec2 vUv; varying vec3 vN; void main(){ vUv = uv; vN = normalize(mat3(modelMatrix) * normal); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
+    fragmentShader: 'uniform sampler2D map; uniform vec3 lightDir; uniform float lightI; uniform float fade; varying vec2 vUv; varying vec3 vN;' +
+      'void main(){ vec4 c = texture2D(map, vUv); float ndl = dot(normalize(vN), normalize(lightDir));' +
+      ' float l = 0.04 + smoothstep(-0.05, 0.4, ndl) * lightI; gl_FragColor = vec4(vec3(1.0) * l, c.a * fade * (0.35 + 0.65 * l)); }'
+  });
+  const cloudMesh = new THREE.Mesh(new THREE.SphereGeometry(EARTH_R * 1.018, 96, 96), cloudMat);
+  earthGroup.add(cloudMesh);
+  earthGroup.rotation.z = 0.41;
+  scene.add(earthGroup);
+
+  // orbit ring + escape trajectory + light-front shell
+  const ringPts = [];
+  for (let i = 0; i <= 256; i++) { const a = (i / 256) * Math.PI * 2; ringPts.push(new THREE.Vector3(Math.cos(a) * ORBIT_R, 0, Math.sin(a) * ORBIT_R)); }
+  const ringMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.30 });
+  const ring = new THREE.Line(new THREE.BufferGeometry().setFromPoints(ringPts), ringMat);
+  scene.add(ring);
+
+  const TH0 = 0.9; // initial orbital angle
+  const thetaCut = TH0 + OMEGA * T_CUT;
+  const eCut = new THREE.Vector3(Math.cos(thetaCut) * ORBIT_R, 0, Math.sin(thetaCut) * ORBIT_R);
+  const vEsc = new THREE.Vector3(-Math.sin(thetaCut), 0, Math.cos(thetaCut)).multiplyScalar(ORBIT_R * OMEGA);
+  const trajPts = [eCut.clone(), eCut.clone().add(vEsc.clone().multiplyScalar(60))];
+  const trajGeo = new THREE.BufferGeometry().setFromPoints(trajPts);
+  const trajMat = new THREE.LineDashedMaterial({ color: 0xffffff, dashSize: 0.55, gapSize: 0.45, transparent: true, opacity: 0 });
+  const traj = new THREE.Line(trajGeo, trajMat); traj.computeLineDistances(); scene.add(traj);
+
+  const shellMat = new THREE.MeshBasicMaterial({ color: 0xffe2b0, wireframe: true, transparent: true, opacity: 0.0, depthWrite: false, blending: THREE.AdditiveBlending });
+  const shell = new THREE.Mesh(new THREE.IcosahedronGeometry(1, 4), shellMat); scene.add(shell);
+
+  // ---------- kinematics ----------
+  const earthPos = t => {
+    if (t <= T_CUT) { const th = TH0 + OMEGA * t; return new THREE.Vector3(Math.cos(th) * ORBIT_R, 0, Math.sin(th) * ORBIT_R); }
+    return eCut.clone().add(vEsc.clone().multiplyScalar(t - T_CUT));
+  };
+  // frame at the moment of the cut (stays valid: Earth now moves in a straight line)
+  const outF = eCut.clone().normalize(), sideF = vEsc.clone().normalize(), upF = new THREE.Vector3(0, 1, 0);
+  const frameOffset = (o, s, u) => outF.clone().multiplyScalar(o).add(sideF.clone().multiplyScalar(s)).add(upF.clone().multiplyScalar(u));
+
+  function cameraShake(t) {
+    let amp = 0;
+    if (t >= T_CUT && t < T_CUT + 0.6) amp += 0.30 * Math.pow(1 - (t - T_CUT) / 0.6, 2);
+    if (t >= T_LIGHT && t < T_LIGHT + 0.5) amp += 0.10 * Math.pow(1 - (t - T_LIGHT) / 0.5, 2);
+    if (amp < 1e-4) return new THREE.Vector3();
+    return new THREE.Vector3(
+      (Math.sin(t * 97.3) * 0.65 + Math.cos(t * 143.7) * 0.35) * amp,
+      (Math.cos(t * 113.1) * 0.65 + Math.sin(t * 167.9) * 0.35) * amp,
+      Math.sin(t * 83.5) * amp * 0.5);
+  }
+
+  const flashEl = document.getElementById('flash'), fadeEl = document.getElementById('fade');
+  const sunDir = new THREE.Vector3();
+
+  function update(t) {
+    t = clamp(t, 0, DURATION);
+    const E = earthPos(t);
+    const spin = t * 0.45;
+    earthMesh.rotation.y = spin; cloudMesh.rotation.y = spin * 1.08 + 0.4;
+    earthGroup.position.copy(E);
+
+    // ---- Sun & lighting ----
+    const sunAlive = t < T_CUT;
+    sunGroup.visible = sunAlive;
+    if (sunAlive) sunGroup.scale.setScalar(1 + Math.sin(t * 1.7) * 0.012);
+    sunDir.copy(sunAlive ? new THREE.Vector3() : new THREE.Vector3()).sub(E).normalize();
+    // light always comes from where the Sun *was* (centre), so use direction to origin from the cut-time Earth when dead
+    const lightFrom = sunAlive ? E : eCut;
+    earthUniforms.lightDir.value.copy(new THREE.Vector3().sub(lightFrom).normalize());
+    let lightI = 1.0;
+    if (t >= T_LIGHT) lightI = 0.0;
+    if (t >= T_LIGHT - 0.12 && t < T_LIGHT) lightI = 1.0 + 0.7 * smooth(T_LIGHT - 0.12, T_LIGHT, t);
+    earthUniforms.lightI.value = lightI;
+    cloudMat.uniforms.lightI.value = lightI;
+    const iceMix = smooth(21.0, 31.0, t);
+    earthUniforms.iceMix.value = iceMix;
+    let nightI = 1.0;
+    if (t > 18.5) { const k = smooth(18.5, 24.0, t); nightI = (1 - k) * (0.72 + 0.28 * Math.sin(t * 53.0) * Math.sin(t * 17.0)); if (nightI < 0) nightI = 0; }
+    earthUniforms.nightI.value = nightI;
+    earthUniforms.rimI.value = 1.0 - 0.55 * smooth(16.0, 17.0, t);
+    earthUniforms.ambient.value = lerp(0.09, 0.15, smooth(16, 28, t));
+    cloudMat.uniforms.fade.value = 1.0 - 0.35 * iceMix;
+
+    // ---- expanding last-light shell (reaches Earth exactly when sunlight ends) ----
+    const dLight = E.length();
+    const sh = clamp((t - T_CUT) / (T_LIGHT - T_CUT), 0, 1.02);
+    shell.visible = t > T_CUT && t < T_LIGHT + 0.05;
+    shell.scale.setScalar(Math.max(0.01, 3 + (earthPos(T_LIGHT).length() - 3) * sh));
+    shellMat.opacity = shell.visible ? 0.09 * (1 - 0.5 * sh) : 0;
+
+    // ---- trajectory line reveal ----
+    trajMat.opacity = 0.55 * smooth(T_CUT + 0.4, T_CUT + 1.6, t);
+    ringMat.opacity = 0.30;
+
+    // ---- camera ----
+    const shake = cameraShake(t);
+    let C, L;
+    if (t < T_CUT) {
+      const k = smooth(0, T_CUT, t);
+      const th = TH0 + OMEGA * t;
+      const out = new THREE.Vector3(Math.cos(th), 0, Math.sin(th));
+      const side = new THREE.Vector3(-Math.sin(th), 0, Math.cos(th));
+      C = E.clone().add(out.clone().multiplyScalar(5.6)).add(side.clone().multiplyScalar(lerp(3.6, -3.0, k))).add(new THREE.Vector3(0, lerp(0.9, 2.3, k), 0));
+      L = E.clone().add(out.clone().multiplyScalar(-lerp(4.5, 8.5, k))).add(new THREE.Vector3(0, lerp(1.0, 1.7, k), 0));
+    } else if (t < T_LIGHT) {
+      const k = smooth(T_CUT, T_LIGHT, t);
+      C = E.clone().add(frameOffset(-lerp(3.6, 5.0, k), lerp(4.2, 3.4, k), lerp(2.0, 1.4, k)));
+      const lookK = smooth(T_CUT, T_CUT + 1.0, t);
+      L = E.clone().add(outF.clone().multiplyScalar(-lerp(5.8, 0.4, lookK)));
+    } else if (t < 30.0) {
+      const k = smooth(T_LIGHT, 30.0, t);
+      C = E.clone().add(frameOffset(-lerp(5.0, 2.0, k), lerp(3.4, 6.2, k), lerp(1.4, 2.2, k)));
+      L = E.clone();
+    } else {
+      const k = (t - 30.0) / (DURATION - 30.0);
+      const dist = 8 + 150 * Math.pow(k, 1.7);   // dynamic zoom-out
+      const dir = frameOffset(-2.0, 6.2, 2.4).normalize().applyAxisAngle(upF, k * 0.9);
+      C = E.clone().add(dir.multiplyScalar(dist));
+      L = E.clone().lerp(new THREE.Vector3(0, 0, 0), clamp(k * 0.62, 0, 1));
+    }
+    camera.position.copy(C).add(shake);
+    camera.lookAt(L.clone().add(shake.clone().multiplyScalar(1.6)));
+    stars.position.copy(camera.position);
+
+    // ---- overlays ----
+    let flash = 0;
+    if (t >= T_CUT && t < T_CUT + 0.32) flash = Math.pow(1 - (t - T_CUT) / 0.32, 1.7);
+    if (t >= T_LIGHT && t < T_LIGHT + 0.25) flash = Math.max(flash, 0.28 * (1 - (t - T_LIGHT) / 0.25));
+    flashEl.style.opacity = String(flash);
+    fadeEl.style.opacity = String(smooth(43.4, 45.0, t));
+    renderer.render(scene, camera);
+  }
+
+  window.renderAtTime = function (sec) { update(sec); };
+  window.SCENE_DURATION = DURATION;
+  update(0);
+})();
+</script>
+</body>
+</html>

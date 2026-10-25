@@ -4,10 +4,12 @@ const fs = require('fs');
 const path = require('path');
 
 const EDGE_PATH = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
-const OUTPUT_VIDEO = "what_if_electrons_tiktok.mp4";
-const OUTPUT_VIDEO_2 = "what_if_electrons_blender_tiktok.mp4";
-const AUDIO_FILE = "original_audio.mp3";
-const VERIFY_DIR = path.resolve(__dirname, "v5_verify");
+const argOf = (n, d) => { const a = process.argv.find(x => x.startsWith(`--${n}=`)); return a ? a.slice(n.length + 3) : d; };
+const HTML_FILE = argOf('html', 'sketch_viewer.html');
+const OUTPUT_VIDEO = argOf('out', "what_if_electrons_tiktok.mp4");
+const OUTPUT_VIDEO_2 = argOf('out2', OUTPUT_VIDEO === "what_if_electrons_tiktok.mp4" ? "what_if_electrons_blender_tiktok.mp4" : null);
+const AUDIO_FILE = argOf('audio', "original_audio.mp3");
+const VERIFY_DIR = path.resolve(__dirname, argOf('verify', "v5_verify"));
 const VIEW_W = 405;
 const VIEW_H = 720;
 const OUT_W = 1080;
@@ -15,10 +17,11 @@ const DEVICE_SCALE = OUT_W / VIEW_W; // 2.6667 -> native 1080x1920 frames
 const IS_DRAFT = process.argv.includes('--draft');
 const FPS_ARG = process.argv.find(a => a.startsWith('--fps='));
 const FPS = FPS_ARG ? parseInt(FPS_ARG.split('=')[1], 10) : (IS_DRAFT ? 30 : 60);
-const DURATION = 80.0;
+const DURATION = parseFloat(argOf('duration', '80.0'));
 const TOTAL_FRAMES = Math.round(DURATION * FPS);
 
-const VERIFY_TIMESTAMPS = [
+const CUSTOM_KEYS = argOf('keys', null);
+const VERIFY_TIMESTAMPS = CUSTOM_KEYS ? CUSTOM_KEYS.split(',').map(s => ({ name: `key_${s}s.png`, t: parseFloat(s) })) : [
   { name: "01_daylight_atom_2s.png", t: 2.5 },
   { name: "02_daylight_park_6s.png", t: 6.5 },
   { name: "02b_transition_flash_8s.png", t: 8.06 },
@@ -62,7 +65,7 @@ async function exportVideo() {
   });
   page.on('pageerror', (err) => console.log(`[browser pageerror] ${err.message}`));
   await page.setViewport({ width: VIEW_W, height: VIEW_H, deviceScaleFactor: DEVICE_SCALE });
-  const htmlPath = 'file:///' + path.resolve(__dirname, 'sketch_viewer.html').replace(/\\/g, '/') + '?export=1';
+  const htmlPath = 'file:///' + path.resolve(__dirname, HTML_FILE).replace(/\\/g, '/') + '?export=1';
   await page.goto(htmlPath, { waitUntil: 'load' });
 
   console.log("1. Rendering 14 keyframe verification screenshots...");
@@ -148,7 +151,7 @@ async function exportVideo() {
   await browser.close();
 
   // Also copy to what_if_electrons_blender_tiktok.mp4 so both output paths have the latest V4 master
-  fs.copyFileSync(OUTPUT_VIDEO, OUTPUT_VIDEO_2);
+  if (OUTPUT_VIDEO_2) fs.copyFileSync(OUTPUT_VIDEO, OUTPUT_VIDEO_2);
   console.log(`Full V4 1080x1920 master video complete! Saved to ${OUTPUT_VIDEO} and ${OUTPUT_VIDEO_2}`);
   process.exit(0);
 }

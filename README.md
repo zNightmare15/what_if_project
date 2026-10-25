@@ -67,3 +67,4 @@ node export_video.js --verify-only
 node export_video.js --fps=60
 ```
 El vídeo final se guarda automáticamente en `what_if_electrons_tiktok.mp4` y en la carpeta `output/`.
+
